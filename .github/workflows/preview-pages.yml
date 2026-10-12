@@ -1,0 +1,91 @@
+name: 在线预览（自动更新）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'templates/**'
+      - 'static/**'
+      - '.github/workflows/preview-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  publish-preview:
+    name: 发布静态前端预览
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 拉取最新前端代码
+        uses: actions/checkout@v4
+
+      - name: 生成独立的静态预览
+        run: |
+          mkdir -p _site/static
+          cp -r static/. _site/static/
+          python3 - <<'PY'
+          from pathlib import Path
+
+          site = Path("_site")
+          html = Path("templates/index.html").read_text(encoding="utf-8")
+          # GitHub Pages 使用子路径，不能引用生产环境的 /static 根路径。
+          html = html.replace('"/static/', '"static/')
+          html = html.replace('href="/"', 'href="./"')
+          html = html.replace(
+              "</head>",
+              '<link rel="stylesheet" href="static/preview.css">\n</head>',
+          )
+          html = html.replace(
+              "<body>",
+              '<body><div class="preview-notice" role="note">'
+              '这是前端在线预览 · 支持切换主题与查看布局，真实传输请部署完整服务'
+              '</div>',
+          )
+          html = html.replace(
+              "</body>",
+              '<script src="static/preview.js"></script>\n</body>',
+          )
+          (site / "index.html").write_text(html, encoding="utf-8")
+          (site / ".nojekyll").touch()
+          (site / "static/preview.css").write_text(
+              ".preview-notice{position:relative;z-index:3;text-align:center;"
+              "padding:9px 14px;font:12px/1.6 -apple-system,BlinkMacSystemFont,"
+              "'PingFang SC',sans-serif;color:#536580;background:#e7f0fb;"
+              "border-bottom:1px solid #cce0fa}"
+              "html[data-theme=dark] .preview-notice{color:#b7c8df;"
+              "background:#1c3049;border-color:#2a4e76}",
+              encoding="utf-8",
+          )
+          (site / "static/preview.js").write_text(
+              "(()=>{for(const id of ['upload','lookup','claim']){"
+              "const button=document.getElementById(id);"
+              "if(button)button.addEventListener('click',e=>{"
+              "e.preventDefault();e.stopImmediatePropagation();"
+              "document.getElementById('message').textContent="
+              "'这是前端预览页，上传和领取需在正式部署后使用';"
+              "},true)}})();",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: 初始化 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传预览网页
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 发布到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
