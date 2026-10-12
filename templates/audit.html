@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>访问日志 · 好奇猴快传</title>
+  <link rel="icon" type="image/webp" href="/static/hamoki-avatar.webp">
+  <script src="/static/theme.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/brand.css">
+  <link rel="stylesheet" href="/static/summer.css">
+  <link rel="stylesheet" href="/static/audit.css?v=1">
+  <script src="/static/audit.js?v=1" defer></script>
+</head>
+<body>
+<div class="page-glow" aria-hidden="true"></div>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="返回好奇猴快传">
+      <span class="brand-icon"><img src="/static/hamoki-avatar.webp" alt="" width="43" height="43"></span>
+      <span class="brand-text"><span class="brand-name">好奇猴<span>快传</span></span><small class="brand-tagline">访问日志</small></span>
+    </a>
+    <a class="audit-back" href="/">返回快传</a>
+  </header>
+  <main class="audit-main">
+    <div class="audit-card">
+      <div class="audit-heading"><h1>访问日志</h1><p>看看每天谁访问了网站、上传下载了什么，以及失败或异常请求。</p></div>
+      <form id="audit-login-form" class="audit-login">
+        <label for="audit-password">输入管理口令查看</label>
+        <div class="audit-login-row">
+          <input type="password" id="audit-password" autocomplete="current-password" required placeholder="输入口令">
+          <button type="submit" class="primary">查看日志</button>
+        </div>
+      </form>
+      <section id="audit-data" hidden>
+        <div class="audit-controls">
+          <label for="audit-date">查看日期</label>
+          <input type="date" id="audit-date">
+          <button id="audit-refresh" class="secondary" type="button">刷新</button>
+          <button id="audit-logout" class="audit-link-button" type="button">退出查看</button>
+        </div>
+        <div class="audit-overview">
+          <div><small>访问请求</small><strong id="audit-requests">0</strong></div>
+          <div><small>不同 IP</small><strong id="audit-ips">0</strong></div>
+          <div><small>成功上传</small><strong id="audit-uploads">0</strong></div>
+          <div><small>失败 / 拒绝</small><strong id="audit-failures">0</strong></div>
+        </div>
+        <div class="audit-section-head"><h2>访问记录</h2><small id="audit-count">最近记录</small></div>
+        <div class="audit-scroll"><table class="audit-table">
+          <thead><tr><th>时间</th><th>访问 IP / 设备</th><th>操作</th><th>状态</th></tr></thead>
+          <tbody id="audit-rows"></tbody>
+        </table></div>
+        <div class="audit-page-controls">
+          <button id="audit-more" type="button" class="secondary" hidden>加载更多</button>
+        </div>
+        <p class="audit-note">保留最近 30 天（最多 25,000 条）。不保存文件内容、文字、密码或取件码。失败和频繁请求只是可疑迹象，不等于确认遭到攻击。</p>
+      </section>
+      <p id="audit-message" role="status" aria-live="polite"></p>
+    </div>
+  </main>
+</div>
+</body>
+</html>
