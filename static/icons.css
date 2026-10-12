@@ -1,0 +1,52 @@
+/* Unified Hamoki icon system.
+   Line icons: ByteDance IconPark, Apache-2.0 (locally bundled).
+   Social brand pictograms: Simple Icons, CC0-1.0.
+   Small glyphs follow a consistent 48x48 outline, rounded terminals and 2px visual weight. */
+.ui-icon{
+  display:inline-block;vertical-align:middle;
+  flex-shrink:0;width:20px;height:20px;
+  fill:none;stroke:none;
+  color:inherit;overflow:visible;
+}
+.ui-brand-icon{fill:currentColor;stroke:none}
+.tabs .nav-icon{width:18px;height:18px}
+.file-symbol .ui-icon{width:26px;height:26px;color:#fff}
+.menu-icon .ui-icon{width:24px;height:24px}
+.menu-icon.single .ui-icon{color:#209a39}
+.menu-icon.multiple .ui-icon{color:#0794dc}
+.menu-icon.folder .ui-icon{color:#dfa017}
+html[data-theme="dark"] .menu-icon.single .ui-icon{color:#92f875}
+html[data-theme="dark"] .menu-icon.multiple .ui-icon{color:#7dc7ff}
+html[data-theme="dark"] .menu-icon.folder .ui-icon{color:#fbd066}
+.text-label span .ui-icon{width:18px;height:18px;color:#148f3c}
+.expiry-selector .expiry-symbol{display:grid;place-items:center}
+.expiry-selector .expiry-symbol .ui-icon{width:24px;height:24px;color:#de870a}
+#upload>.ui-icon,#lookup>.ui-icon{width:23px;height:23px}
+#upload .ui-icon{transform:translateY(-1px)}
+#lookup .ui-icon{color:inherit}
+.file-icon{display:grid;place-items:center;min-width:32px;width:32px;height:32px;border-radius:9px;background:var(--blue-wash);color:var(--blue)}
+.file-icon .ui-icon{width:20px;height:20px}
+.pickup-limit>.ui-icon,.public-share-page .public-limit>.ui-icon{
+ width:16px;height:16px;color:inherit;margin-right:2px;
+}
+.section-icon .ui-icon{width:25px;height:25px;color:#fff}
+html[data-theme="light"] .section-icon .ui-icon{color:#fff}
+@media(max-width:640px){.section-icon .ui-icon{width:19px;height:19px}}
+.countdown-symbol .ui-icon{width:27px;height:27px;color:#bb6e00}
+html[data-theme="dark"] .countdown-symbol .ui-icon{color:#934b00}
+.social-bubble{display:grid;place-items:center;background:#1aac66;overflow:hidden}
+.social-bubble.qq{background:#268ee8}
+.social-bubble .ui-brand-icon{width:16px;height:16px;color:#fff}
+.done-share-grid .social-bubble .ui-brand-icon{width:19px;height:19px}
+.done .copy-code .ui-icon{width:19px;height:19px;color:#103b22}
+.done .copy-code[data-copied="true"]::after{content:"已复制"!important}
+.done .actions #again{display:inline-flex;align-items:center;gap:9px}
+.done .actions #again .ui-icon{width:20px;height:20px}
+.public-share-page .expiry-countdown span .ui-icon{width:16px;height:16px;color:#f2a123;vertical-align:-3px}
+.public-share-page .download .ui-icon{width:19px;height:19px;margin-right:7px;vertical-align:-4px}
+.public-share-page .pickup-limit>.ui-icon{width:15px;height:15px}
+@media(max-width:390px){
+ .menu-icon .ui-icon{width:21px;height:21px}
+ .file-symbol .ui-icon{width:24px;height:24px}
+ .social-bubble .ui-brand-icon{width:15px;height:15px}
+}
