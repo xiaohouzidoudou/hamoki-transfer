@@ -70,7 +70,7 @@
   <section class="private-panel"><div class="private-section-heading"><h2>发送新内容</h2><small>发送后覆盖上一条</small></div>
     <textarea id="private-text" rows="3" placeholder="在这里粘贴文字，也可以选择图片或文件…"></textarea>
     <div class="private-send-tools"><label for="private-files" class="secondary private-file-label"><svg class="ui-icon" aria-hidden="true"><use href="static/icons.svg#file"></use></svg> 选择文件</label><input type="file" id="private-files" multiple hidden><button id="private-send" class="primary" type="button">发送</button></div>
-    <p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
+    <div id="private-file-selection" class="private-file-selection" hidden><div class="private-file-selection-head"><strong>已选择文件</strong><button id="private-files-clear" class="private-text-button" type="button">全部移除</button></div><div id="private-selected-list"></div></div><p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
   </section>
   <div id="private-settings" class="private-panel" hidden><div class="private-section-heading"><h2>绑定设备</h2><button class="private-text-button" id="private-settings-close" type="button">收起</button></div>
     <p class="private-muted">绑定不会自动过期；清理浏览器数据后，需要用原配对码再次绑定。</p>
