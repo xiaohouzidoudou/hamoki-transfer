@@ -4,11 +4,13 @@
 
 ## 在线地址和验证
 
-- 完整测试站：**https://dev.2858888.xyz/**
+- **公用测试中心首页**：https://dev.2858888.xyz/
+- **好奇猴快传项目路径**：https://dev.2858888.xyz/kauichuan/
+- 以后所有项目复用同一个 `dev.2858888.xyz` 域名，分别使用 `/项目名/`，不用每次申请新域名
 - 静态界面预览：**https://xiaohouzidoudou.github.io/hamoki-transfer/**
 - 美国 VPS 公开 IPv4：`104.233.200.159`
 - DNS：`dev.2858888.xyz` A 记录指向上述 IPv4
-- 公网 HTTPS 由现有 1Panel OpenResty 反向代理到宿主机 `127.0.0.1:8018`，无需开放 8018 端口
+- 公网 HTTPS 由现有 1Panel OpenResty 提供；`/` 静态开发测试中心；`/kauichuan/` 反向代理到宿主机 `127.0.0.1:8018`，无需开放 8018 端口
 - Let's Encrypt 证书签发成功，证书到期时间为 2027-01-10；`acme.sh` 已安装证书和续期后的 OpenResty reload hook，宿主机现有 cron 定期运行 acme.sh
 - 实际验证：从公司电脑打开网页、`/health`、CSS/JS 均返回 200；公网 HTTPS 文件/文字上传、取件码查询、SVG 二维码、文件字节完整性、文字领取全部通过，匿名上传返回 403
 
@@ -20,10 +22,13 @@
 - 仅监听宿主机 `127.0.0.1:8018` → 容器 `8000`
 - 独立 SQLite 和临时文件：`/opt/hamoki-dev/app/data`
 - 上传授权、大小限制和 `PUBLIC_URL` 等配置位于 `/opt/hamoki-dev/app/.env`，**该文件绝不提交公共仓库**，本项目使用私密链接进行上传授权，下载无需登录
-- OpenResty 虚拟站点配置：`/opt/1panel/www/conf.d/dev.2858888.xyz.conf`
+- OpenResty 公共入口虚拟主机：`/opt/1panel/www/conf.d/dev.2858888.xyz.conf`
+- 公共项目首页：`/opt/1panel/www/sites/dev.2858888.xyz/index/index.html`
+- 项目反向代理规则目录：`/opt/1panel/www/sites/dev.2858888.xyz/projects/`（`kauichuan.conf` 为第一个项目）
+- 前端 JS/HTML 使用相对路径及项目基本路径；快传在 .env 中的 `PUBLIC_URL` 为 `https://dev.2858888.xyz/kauichuan`，二维码、复制的链接均含 `/kauichuan/`
 - 网站证书：`/opt/1panel/www/sites/dev.2858888.xyz/ssl/`
 - HTTP 阶段配置备份：`/opt/hamoki-dev/dev.2858888.xyz.http.conf.bak`
-- HTTPS `/health` 返回 200，HTTP 自动 301 跳转 HTTPS
+- HTTPS `/kauichuan/health` 返回 200，HTTP 自动 301 跳转 HTTPS；原来根目录的 `/?code=XXXXXXXXXXXX` 分享链接自动 302 转到 `/kauichuan/?code=XXXXXXXXXXXX`
 - **注意**：该域名直接通过 1Panel OpenResty 的挂载配置文件注册，而不是通过 1Panel 网站数据库新建；可能不会显示在 1Panel「网站」列表中。修改网站时需注意此项，不要在面板里建立同名冲突站点
 
 ## 如何迭代
@@ -35,8 +40,9 @@
 
 ## 以后新增其他项目
 
-- 复用同一台美国 VPS 的开发测试流程，但**新项目各自使用独立目录、Docker Compose 项目、卷、端口和项目专属测试域名**，禁止所有项目共用好奇猴快传的数据库或上传密钥
-- 为新项目配置新的 DNS、证书和 OpenResty 虚拟主机，然后将独立服务绑定宿主机回环端口；不修改其他现有容器
+- **一个域名多个项目路径**：使用 `https://dev.2858888.xyz/项目名/`。根目录是项目入口列表，不再直接运行单个软件；不必给每个新项目重复申请 DNS 与证书。
+- 每个新项目使用独立代码目录、Docker Compose 名、卷、端口和应用授权；例如将新应用绑定 `127.0.0.1:8020`，在 `projects/新项目.conf` 增加独立的 `location ^~ /新项目/`，配置代理去除项目前缀，并在公共首页添加项目入口。变更前备份、`openresty -t` 后再 reload，禁止覆盖其它站点和项目数据。
+- 应用应支持被托管在子路径之下：静态资源、API、下载链接、二维码均使用项目路径，必要时配置对应的 URL 前缀。
 - 在 AgentDock 使用模板 `hamoki-universal-dev-preview-release`，持续复用「需求 → 开发 → 在线预览 → 用户反馈 → 验收发布」
 - 未经用户明确确认，不自动发布新的生产版本
 
@@ -44,3 +50,9 @@
 
 - 当前完整测试站的应用代码更新仍是人工执行，**并非每次 GitHub 提交都会自动重建 Docker**；未来可以单独增加可回滚的 CI/CD 发布。
 - 不公开分享发送方私密上传链接。必要时通过受控设备或管理通道授权；公共页面直接访问仅支持取件及展示。
+
+## 公共域名的浏览器安全边界
+
+`/kauichuan/`、`/新项目/` 在同一个域名下，**它们共享浏览器同源权限**，包括 `localStorage`、`sessionStorage` 和非 Path 隔离的 Cookie。不可把来自不受信任的第三方项目直接部署在同一个公共开发域名；更不能在这个域名下测试真实敏感账户或生产密钥。需要严格安全隔离的项目，应单独使用测试子域名。
+
+已验证：从公司电脑访问公共首页、`/kauichuan/` 和资源/健康接口均返回 200；公网 HTTPS 下上传、取件、二维码（编码新路径）、文件字节比对、匿名上传 403 和旧链接兼容跳转均通过。
