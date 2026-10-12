@@ -53,14 +53,21 @@
 
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
           <div id="drop" class="file-select">
-            <button id="pick" class="file-pick" type="button">
+            <button id="pick" class="file-pick" type="button" aria-expanded="false" aria-controls="picker-menu">
               <span class="file-symbol" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
               </span>
-              <span class="pick-copy"><strong>选择文件</strong><small>单个文件最大 5 GB</small></span>
-              <span class="pick-arrow" aria-hidden="true">＋</span>
+              <span class="pick-copy"><strong>选择文件</strong><small>单次总大小最大 5 GB</small></span>
+              <span class="pick-arrow" aria-hidden="true">⌄</span>
             </button>
+            <div class="picker-menu" id="picker-menu" hidden>
+              <button type="button" id="pick-single"><span aria-hidden="true">▤</span>单个文件</button>
+              <button type="button" id="pick-multiple"><span aria-hidden="true">▣</span>多个文件</button>
+              <button type="button" id="pick-folder"><span aria-hidden="true">▱</span>整个文件夹</button>
+            </div>
             <input type="file" id="file" hidden>
+            <input type="file" id="files" multiple hidden>
+            <input type="file" id="folder" webkitdirectory directory multiple hidden>
             <div class="selected-file" id="selected-file" hidden>
               <span id="file-info" class="file-info" role="status"></span>
               <button id="clear-file" class="clear-file" type="button" hidden>移除</button>
@@ -86,8 +93,7 @@
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
           <h2>输入取件码</h2>
-          <label class="fieldlabel" for="code-input">4 位英数字取件码（兼容旧码）</label>
-          <input id="code-input" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A5K7">
+          <input id="code-input" aria-label="取件码" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="输入取件码，例如 A5K7">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
           <div id="found" class="found" hidden>
             <div class="file-line">
@@ -143,6 +149,11 @@
             </div>
             <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>手机扫码领取</span></div>
           </div>
+          <div class="social-share" aria-label="社交分享">
+            <span>分享给好友</span>
+            <button id="share-wechat" type="button" aria-label="分享到微信"><span class="social-bubble" aria-hidden="true">微</span> 微信</button>
+            <button id="share-qq" type="button" aria-label="分享到QQ"><span class="social-bubble qq" aria-hidden="true">Q</span> QQ</button>
+          </div>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
             <button id="again" class="secondary" type="button">再传一个</button>
@@ -157,5 +168,10 @@
   </main>
   <footer><span>© 好奇猴快传</span><a href="https://github.com/xiaohouzidoudou/hamoki-transfer" target="_blank" rel="noopener noreferrer">开源项目 ↗</a></footer>
 </div>
+<dialog id="preview-dialog" class="preview-dialog" aria-label="历史图片预览">
+  <div class="preview-toolbar"><strong id="preview-name"></strong><button id="close-preview" type="button" aria-label="关闭图片预览">✕</button></div>
+  <img id="preview-image" alt="历史分享图片预览">
+  <p>仅预览图片，不消耗领取次数</p>
+</dialog>
 </body>
 </html>
