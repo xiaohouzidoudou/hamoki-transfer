@@ -235,6 +235,10 @@ html[data-theme="dark"] .file-pick{border-color:#495162;background:var(--field);
 html[data-theme="dark"] .file-pick:hover{background:var(--blue-wash);border-color:var(--blue)}
 
 
+/* 简洁醒目的四位数字取件码，兼容长版旧码展示。 */
+#done-code{font-size:clamp(24px,7vw,34px);letter-spacing:3px}
+#code-input{text-align:center;font-size:21px;letter-spacing:3px;font-variant-numeric:tabular-nums}
+
 /* 最近发送历史：仅保留本浏览器中的非秘密取件元数据。 */
 .tabs button{width:33.333%;gap:6px;padding:0 4px}
 .tabs button svg{flex-shrink:0}
