@@ -31,3 +31,22 @@
 .tabs:has(#tab-private) button svg{display:none}
 .private-send-tools button{min-width:100px}
 }
+
+/* Four destinations: align pill and text on all screen sizes. */
+.tabs:has(#tab-private){display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;min-width:0}
+.tabs:has(#tab-private)::before{width:calc((100% - 22px) / 4)}
+.tabs:has(#tab-private)[data-index="0"]::before{transform:translateX(0)}
+.tabs:has(#tab-private)[data-index="1"]::before{transform:translateX(calc(100% + 3px))}
+.tabs:has(#tab-private)[data-index="2"]::before{transform:translateX(calc(200% + 6px))}
+.tabs:has(#tab-private)[data-index="3"]::before{transform:translateX(calc(300% + 9px))}
+.tabs:has(#tab-private) button{width:100%;min-width:0;white-space:nowrap;display:flex;gap:4px;align-items:center;justify-content:center;font-size:12px}
+.tabs:has(#tab-private) button svg{width:15px;height:15px;flex-shrink:0}
+.private-invite-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.private-invite-box code{flex:1 1 210px;overflow-wrap:anywhere;font-size:13px;padding:12px;border-radius:10px;background:var(--soft);color:var(--ink)}
+.private-invite-box button{flex-shrink:0}
+@media(max-width:520px){
+.tabs:has(#tab-private){padding:4px;margin:9px 8px 0}
+.tabs:has(#tab-private) button{font-size:11px;padding:0 1px}
+.tabs:has(#tab-private) button svg{display:none}
+.tabs:has(#tab-private)::before{top:4px;bottom:4px;left:4px;width:calc((100% - 17px) / 4)}
+}
