@@ -63,3 +63,24 @@
 - 回收时先说明影响（仍有效的取件码、二维码和测试文件将无法继续从该路径领取），检查备份，再移除公共首页项目入口和对应 `projects/<项目名>.conf` 的代理路由；对于已下线的项目前缀应由网关明确返回 **410 Gone**（含接口、资源与下载），不能继续代理到容器；运行 `openresty -t` 后 reload，再从公网验证 410。
 - 最后停止/移除该项目独立 Docker Compose 测试服务，并按已确认的保留期清理测试数据。保留必要的源码、正式构建、非敏感部署文档和恢复材料，不留下多余的活跃容器和公网地址。
 - 旧根目录 `/?code=...` 的兼容重定向也须在相关项目下线时取消，避免继续指向已停用链接。其他项目路由与公共 HTTPS 域名不受影响。
+
+## 开发测试域名闲时关闭（2026-10-12 更新）
+
+需求约定：`dev.2858888.xyz` 是永久保留的统一开发域名，**没有在测试的项目时对外关闭**，只有需要测试才重新开放。各项目的 `/项目名/` 仅在测试期间存在，用户完成验收并迁移到正式版后不永久保留。
+
+美国 VPS 已建立独立站点开关：
+
+```sh
+/opt/hamoki-dev/dev-control/dev-site.sh status  # 查询 online/offline 和活跃项目路由数
+/opt/hamoki-dev/dev-control/dev-site.sh on      # 准备开始新项目时开启公共开发站
+/opt/hamoki-dev/dev-control/dev-site.sh sync    # 依据 projects/*.conf 数量自动决定 online/offline
+/opt/hamoki-dev/dev-control/dev-site.sh off     # 无活跃项目才允许关闭，拒绝误关运行中项目
+```
+
+- 控制脚本与在线/离线 Nginx 配置：`/opt/hamoki-dev/dev-control/`；每次实际切换前备份原虚拟主机文件到 `/opt/hamoki-dev/dev-control/backups/`，`openresty -t` 验证成功后才 reload。
+- 在线配置为独立站点 `/opt/1panel/www/conf.d/dev.2858888.xyz.conf` 的备份快照。若管理员或 1Panel 修改了网站设置，脚本会识别当前配置与已知快照不同并拒绝覆盖，需要先人工审查及更新模板。
+- 离线配置仅针对 `dev.2858888.xyz` 的 HTTP/HTTPS 请求返回 **Nginx 444**，保留 `/.well-known/acme-challenge/` 路径用于 Let’s Encrypt HTTP-01 续期；其余网站及 OpenResty 服务保持在线。主域名会继续解析到美国 VPS，TLS 仍握手但不提供网页。
+- 禁止在还有项目路由时执行离线切换。用户确认最后项目完成后，先核对是否存在仍需要领取的文件及临时数据，移除项目代理规则/卡片，停止项目容器，再运行 `dev-site.sh sync`。
+- 新项目使用时，通过授权的 AgentDock/SSH 通道执行 `on`，复用已有证书及路径路由能力，不再额外申请子域名。
+- 已验证：脚本 `bash -n`、`status`、`on` 幂等、`sync` 在 1 个活跃项目时维持在线、`off` 在 1 个活跃项目时安全拒绝；离线 Nginx 配置通过独立 `openresty -t`。**当前因好奇猴快传仍在使用，未实际切到 offline 做停站验证**，正式关闭时须检查公网访问状态。
+- 控制脚本无密钥的 GitHub 备份：[shared-dev-site.sh](../ops/shared-dev-site.sh)、[shared-dev-offline.conf](../ops/shared-dev-offline.conf)。
