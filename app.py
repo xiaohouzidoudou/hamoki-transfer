@@ -55,12 +55,15 @@ def create_app(test_config=None):
     app.config.update(
         DATA_DIR=os.environ.get('DATA_DIR', '/data'),
         PUBLIC_URL=os.environ.get('PUBLIC_URL', ''),
-        MAX_CONTENT_LENGTH=int(os.environ.get('MAX_UPLOAD_MB', '250')) * 1024 * 1024,
-        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '4096')) * 1024 * 1024,
+        MAX_UPLOAD_MB=int(os.environ.get('MAX_UPLOAD_MB', '5120')),
+        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '10240')) * 1024 * 1024,
         TESTING=False,
     )
     if test_config:
         app.config.update(test_config)
+    # Allow multipart framing overhead while enforcing the exact file-byte limit.
+    app.config['MAX_FILE_BYTES'] = int(app.config['MAX_UPLOAD_MB']) * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = app.config['MAX_FILE_BYTES'] + 1024 * 1024
     # Only our loopback-bound reverse proxy is trusted to append the client IP.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
@@ -189,6 +192,8 @@ def create_app(test_config=None):
                 size = pending.stat().st_size
                 if size == 0:
                     abort(400, description='不能上传空文件')
+                if size > app.config['MAX_FILE_BYTES']:
+                    abort(413, description='单个文件不能超过 5 GB')
             except Exception:
                 pending.unlink(missing_ok=True)
                 raise
@@ -308,12 +313,12 @@ def create_app(test_config=None):
             # Text-only links still use one of the ten available text pickups.
             item = consume(row['code'], 'text')
             return render_template('public_share.html', has_file=False,
-                                   name=row['name'], text=item['body'])
+                                   name=row['name'], text=item['body'], expires=row['expires'])
         if request.args.get('download') != '1':
             # Show the waiting screen immediately; the browser starts one
             # download in the background after the landing page is visible.
             return render_template('public_share.html', has_file=True,
-                                   name=row['name'], text=row['body'])
+                                   name=row['name'], text=row['body'], expires=row['expires'])
         path = files / row['code']
         if not path.is_file():
             abort(404, description='文件不存在或已经删除')
