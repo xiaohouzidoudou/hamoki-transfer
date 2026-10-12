@@ -26,7 +26,7 @@ mkdir -p data && sudo chown 10001:10001 data
 docker compose up -d --build
 ```
 
-建议在 1Panel 或 Nginx 等反向代理后通过 HTTPS 使用，把域名转发到 `127.0.0.1:8018`。例如单独域名部署时，把 `PUBLIC_URL` 设置为 `https://send.example.com`；若部署在共享域名子路径，如 `https://dev.example.com/kauichuan/`，则将 `PUBLIC_URL` 设置为 `https://dev.example.com/kauichuan`，并通过 Nginx 反向代理把 `/kauichuan/` 前缀去掉再转发给 Flask。前端资源、API、二维码链接会根据项目路径定位。
+建议通过 HTTPS 反向代理运行，可用 Nginx 或其他 Web 服务器；如部署在 URL 子路径下，请按子路径设置 `PUBLIC_URL` 并调整反向代理路由。
 
 **发送方私密链接（不得公开）：**
 
@@ -35,8 +35,6 @@ docker compose up -d --build
 首次打开后，浏览器会把密钥保存在当前标签页的会话存储中，并从地址栏清除。上传请求使用请求头提交密钥。**接收方不需要密钥**，只用这样的领取链接：
 
 `https://send.example.com/?code=THE_CODE`
-
-共享开发测试域名的不同项目路径仍属于同一个浏览器源，可能共享本地存储和 Cookie；不要在同域名下部署不可信第三方应用或使用生产环境的敏感账户，需要隔离时改为独立子域名。
 
 不要在截图、聊天记录或公开网页中泄露私密链接。在多人共用的电脑上，不建议长期保留带上传密钥的浏览器会话。需要撤销上传权限时，修改服务器里的 `UPLOAD_SECRET`。
 
