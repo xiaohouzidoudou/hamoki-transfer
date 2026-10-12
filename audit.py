@@ -116,6 +116,11 @@ def setup_audit(app, db, root, limit):
             "/api/admin/login": "管理员登录",
             "/api/admin/logout": "管理员退出",
         }
+        if route == "/f/<token>":
+            if request.args.get("download") == "1":
+                return "公开文件下载", route
+            if request.args.get("preview") == "1":
+                return "预览图片", route
         return mapping.get(route, "其他请求"), route
 
     def paired_device(con):
