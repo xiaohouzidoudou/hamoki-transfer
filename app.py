@@ -34,7 +34,7 @@ RATE = {}
 
 class InsufficientStorage(HTTPException):
     code = 507
-    description = '服务器临时存储空间不足'
+    description = '网盘可用容量不足，请等候过期文件自动清理后重试'
 
 
 def make_code():
@@ -62,7 +62,8 @@ def create_app(test_config=None):
         DATA_DIR=os.environ.get('DATA_DIR', '/data'),
         PUBLIC_URL=os.environ.get('PUBLIC_URL', ''),
         MAX_UPLOAD_MB=int(os.environ.get('MAX_UPLOAD_MB', '5120')),
-        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '10240')) * 1024 * 1024,
+        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '15360')) * 1024 * 1024,
+        CLEANUP_INTERVAL_SECONDS=int(os.environ.get('CLEANUP_INTERVAL_SECONDS', '300')), 
         TESTING=False,
     )
     if test_config:
@@ -118,13 +119,17 @@ def create_app(test_config=None):
             con.execute('DELETE FROM public_links WHERE code NOT IN (SELECT code FROM shares)')
 
     def clean_loop():
+        interval = max(1, app.config['CLEANUP_INTERVAL_SECONDS'])
         while True:
-            time.sleep(300)
+            time.sleep(interval)
             try:
                 cleanup()
             except Exception:
                 app.logger.exception('cleanup error')
 
+    # Reclaim expired disk files and share tokens immediately after a restart.
+    # The background worker then repeats deletion every 5 minutes by default.
+    cleanup()
     if not app.config['TESTING']:
         threading.Thread(target=clean_loop, daemon=True, name='hamoki-cleaner').start()
 
