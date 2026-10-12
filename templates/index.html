@@ -83,8 +83,8 @@
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
           <h2>输入取件码</h2>
-          <label class="fieldlabel" for="code-input">12 位取件码</label>
-          <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A3BC5D7EF9GH">
+          <label class="fieldlabel" for="code-input">4 位数字取件码（旧版 12 位也能用）</label>
+          <input id="code-input" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：0427">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
           <div id="found" class="found" hidden>
             <div class="file-line">
