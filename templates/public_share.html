@@ -9,18 +9,19 @@
   <title>好奇猴快传 · 领取分享内容</title>
   <link rel="stylesheet" href="../static/public_share.css">
   <link rel="stylesheet" href="../static/public-summer.css">
+  <link rel="stylesheet" href="../static/icons.css">
   <script src="../static/countdown.js" defer></script>
   <script src="../static/public_share.js" defer></script>
 </head>
 <body class="public-share-page">
 <main>
-  <p class="pickup-limit public-limit"><span aria-hidden="true">♡</span> 最多领取 10 次 <span class="pickup-limit-note">· 到期自动销毁</span></p>
+  <p class="pickup-limit public-limit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../static/icons.svg#shield"></use></svg> 最多领取 10 次 <span class="pickup-limit-note">· 到期自动销毁</span></p>
   <header class="public-hero">
     <div class="public-brand"><img src="../static/hamoki-avatar.webp" alt="" width="54" height="54"><span>好奇猴<strong>快传</strong><small>简单 · 快速 · 安全分享</small></span></div>
     <h1 class="page-brand">领取<span>分享内容</span></h1>
     <p class="public-intro">输入取件码，或通过好友分享链接直接领取</p>
     <img class="pickup-mascot" src="../static/hamoki-avatar.webp" alt="好奇猴探险家" width="132" height="132">
-    <div class="expiry-countdown" data-expiry-countdown data-expires="{{ expires }}" aria-label="文件过期倒计时"><span>◷ 剩余时间</span><strong>计算中…</strong></div>
+    <div class="expiry-countdown" data-expiry-countdown data-expires="{{ expires }}" aria-label="文件过期倒计时"><span><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../static/icons.svg#clock"></use></svg> 剩余时间</span><strong>计算中…</strong></div>
   </header>
   {% if has_file %}
   <div class="download-state pickup-card" role="status" aria-live="polite">
@@ -33,7 +34,7 @@
   <p class="shared-note-label">附带文字</p>
   <pre>{{ text }}</pre>
   {% endif %}
-  <a id="manual-download" class="download" href="?download=1">没有弹出下载？点这里手动下载</a>
+  <a id="manual-download" class="download" href="?download=1"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="../static/icons.svg#download"></use></svg> 没有弹出下载？点这里手动下载</a>
   <small>首次进入会自动尝试下载，文件过期后无法再次下载。</small>
   {% else %}
   <h2 class="receive-message-title">收到一段文字</h2>
