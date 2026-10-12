@@ -6,10 +6,12 @@
   <meta name="referrer" content="no-referrer">
   <title>好奇猴快传 · 领取分享内容</title>
   <link rel="stylesheet" href="../static/public_share.css">
+  <script src="../static/countdown.js" defer></script>
   <script src="../static/public_share.js" defer></script>
 </head>
 <body class="public-share-page">
 <main>
+  <div class="expiry-countdown" data-expiry-countdown data-expires="{{ expires }}" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>计算中…</strong></div>
   <h1 class="page-brand">🐵 好奇猴快传</h1>
   {% if has_file %}
   <div class="download-state" role="status" aria-live="polite">
