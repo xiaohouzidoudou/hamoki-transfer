@@ -157,7 +157,7 @@ function pane(name) {
   const nextIndex = tabNames.indexOf(name);
   const currentIndex = tabNames.indexOf(activePane);
   if (nextIndex >= 0) {
-    document.querySelector('.tabs').style.setProperty('--tab-index', String(nextIndex));
+    document.querySelector('.tabs').dataset.index = String(nextIndex);
     document.querySelector('.workspace').dataset.slideDirection =
       nextIndex < currentIndex ? 'backward' : 'forward';
   }
@@ -178,7 +178,7 @@ const ttlOptions = document.querySelector('.ttl-options');
 const ttlInputs = [...document.querySelectorAll('input[name="ttl"]')];
 function syncTtlSlider() {
   const index = Math.max(0, ttlInputs.findIndex(input => input.checked));
-  ttlOptions.style.setProperty('--ttl-index', String(index));
+  ttlOptions.dataset.index = String(index);
 }
 ttlInputs.forEach(input => input.addEventListener('change', syncTtlSlider));
 syncTtlSlider();
