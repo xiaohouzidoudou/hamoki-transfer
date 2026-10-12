@@ -179,3 +179,57 @@ html[data-theme="dark"] footer{color:#81848f}
 @media(prefers-reduced-motion:reduce){
   *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* 一屏式首页：保留苹果风格，但去掉装饰占位 */
+.topbar{height:66px}
+.workspace{max-width:520px}
+.tabs{margin:13px 19px 0}
+.pane{padding:18px 25px 19px}
+.file-select{margin:0}
+.file-pick{display:flex;align-items:center;gap:13px;width:100%;min-height:76px;padding:13px 17px;text-align:left;background:var(--field);color:var(--ink);border:1px dashed #c8d2df;border-radius:17px;font-size:16px;font-weight:670;box-shadow:none}
+.file-pick:hover{border-color:var(--blue);background:var(--blue-wash)}
+.file-symbol{width:42px;height:42px;display:grid;place-items:center;color:var(--blue);background:var(--blue-wash);border-radius:12px}
+.file-symbol svg{width:24px;height:24px}
+.pick-arrow{margin-left:auto;font-size:22px;font-weight:400;color:var(--muted)}
+.selected-file{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0 1px;padding:8px 10px;border-radius:11px;background:var(--soft)}
+.selected-file[hidden]{display:none!important}
+.file-info{margin:0;min-width:0;font-size:12px}
+.clear-file{margin:0;flex-shrink:0;display:block;padding:6px 8px}
+.text-label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:18px 0 9px}
+#text{min-height:72px;max-height:130px;resize:vertical}
+.row{margin:11px 0}
+.row select{padding:9px 12px}
+.full{margin-top:5px;min-height:48px}
+.hint{margin:10px 0 0}
+footer{max-width:520px;margin:20px auto 16px}
+.receive-pane{padding-top:23px}
+.receive-pane h2{margin:0 0 6px;font-size:20px}
+.receive-pane .fieldlabel{margin-top:19px}
+@media(max-width:520px){
+  .shell{padding:0 12px}
+  .topbar{height:56px}
+  .card{border-radius:20px}
+  .tabs{margin:10px 12px 0;padding:4px}
+  .tabs button{min-height:41px}
+  .pane{padding:14px 15px 14px}
+  .file-pick{min-height:67px;padding:11px 13px;font-size:15px}
+  .file-symbol{width:37px;height:37px}
+  .text-label{margin:12px 0 7px}
+  #text{min-height:65px;padding:11px 12px;font-size:13px}
+  .row{margin:10px 0}
+  .row select{padding:8px 10px}
+  .hint{font-size:10px;line-height:1.4;margin:8px 0 0}
+  footer{margin:17px auto}
+  .receive-pane{padding-top:17px}
+}
+@media(max-height:700px) and (max-width:520px){
+  .topbar{height:50px}
+  .tabs{margin-top:7px}
+  .pane{padding-top:10px;padding-bottom:11px}
+  .file-pick{min-height:60px}
+  #text{min-height:56px}
+  .text-label{margin-top:9px}
+  footer{margin-top:10px}
+}
+html[data-theme="dark"] .file-pick{border-color:#495162;background:var(--field);color:var(--ink)}
+html[data-theme="dark"] .file-pick:hover{background:var(--blue-wash);border-color:var(--blue)}
