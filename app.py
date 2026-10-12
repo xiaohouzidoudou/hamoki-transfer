@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import io
+import mimetypes
 import os
 import secrets
 import sqlite3
@@ -16,6 +17,9 @@ from qrcode.image.svg import SvgPathImage
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
+
+# Minimal container images may lack system MIME mappings for WebP avatars.
+mimetypes.add_type('image/webp', '.webp')
 
 ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 DIGITS = '23456789'
