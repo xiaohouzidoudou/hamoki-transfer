@@ -43,7 +43,19 @@ function displayDone(item) {
     : '旧记录使用原来的领取链接，新上传会生成直接访问的公共链接。';
   $('pane-done').querySelector('[data-expiry-countdown]').dataset.expires = String(item.expires || item.created + historyTtl[item.ttl] || 0);
   window.hamokiRefreshCountdown?.();
-  $('done-code').textContent = item.code;
+  const codeDisplay = $('done-code');
+  codeDisplay.replaceChildren();
+  codeDisplay.classList.toggle('code-tiles', item.code.length === 4);
+  if (item.code.length === 4) {
+    for (const character of item.code) {
+      const tile = document.createElement('span');
+      tile.className = 'code-tile';
+      tile.textContent = character;
+      codeDisplay.append(tile);
+    }
+  } else {
+    codeDisplay.textContent = item.code;
+  }
   $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(item.code));
   $('copy-link').textContent = '复制领取链接';
   pane('done');
@@ -93,6 +105,7 @@ function flash(message) {
   $('message').textContent = message || '';
 }
 function pane(name) {
+  document.body.classList.toggle('is-done', name === 'done');
   ['send', 'get', 'history', 'done'].forEach(item => {
     $('pane-' + item).hidden = item !== name;
   });
