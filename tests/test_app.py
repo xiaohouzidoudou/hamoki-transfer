@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 os.environ.setdefault('DATA_DIR', tempfile.mkdtemp(prefix='hamoki-import-'))
 
-from app import RATE, create_app, valid_code
+from app import RATE, create_app, valid_code, make_code, DIGITS, LETTERS
 
 
 class HamokiTest(unittest.TestCase):
@@ -29,7 +29,8 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(result.status_code, 201)
         code = result.json['code']
         self.assertEqual(len(code), 4)
-        self.assertTrue(code.isascii() and code.isdecimal())
+        self.assertTrue(any(c in DIGITS for c in code))
+        self.assertTrue(any(c in LETTERS for c in code))
         self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 5)
         svg = self.client.get('/api/qr/' + code)
         self.assertEqual(svg.status_code, 200)
@@ -60,7 +61,8 @@ class HamokiTest(unittest.TestCase):
         self.assertTrue(result.json['has_file'])
         self.assertTrue(result.json['has_text'])
         self.assertEqual(len(code), 4)
-        self.assertTrue(code.isdecimal())
+        self.assertTrue(any(c in DIGITS for c in code))
+        self.assertTrue(any(c in LETTERS for c in code))
         lookup = self.client.get('/api/item/' + code)
         self.assertEqual(lookup.status_code, 200)
         self.assertTrue(lookup.json['has_text'])
@@ -98,14 +100,23 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
         self.assertEqual(len(res.json['code']), 4)
 
-    def test_four_digit_leading_zero_and_collision(self):
-        with patch('app.secrets.randbelow', side_effect=[7, 7, 9]):
+    def test_four_character_alphanumeric_collision(self):
+        with patch('app.make_code', side_effect=['A2C3', 'A2C3', 'B4D5']):
             first = self.send_text('first').json['code']
             second = self.send_text('second').json['code']
-        self.assertEqual(first, '0007')
-        self.assertEqual(second, '0009')
-        self.assertEqual(self.client.post('/api/text/0007').json['text'], 'first')
-        self.assertEqual(self.client.post('/api/text/0009').json['text'], 'second')
+        self.assertEqual(first, 'A2C3')
+        self.assertEqual(second, 'B4D5')
+        self.assertEqual(self.client.post('/api/text/A2C3').json['text'], 'first')
+        self.assertEqual(self.client.post('/api/text/B4D5').json['text'], 'second')
+
+    def test_legacy_four_digit_numeric_still_supported(self):
+        legacy = '0007'
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)',
+                        (legacy, 'text', '临时文字.txt', 10, 'old four digits',
+                         int(time.time()) + 3600, 5, int(time.time())))
+        self.assertTrue(valid_code(legacy))
+        self.assertEqual(self.client.post('/api/text/0007').json['text'], 'old four digits')
 
     def test_old_twelve_character_code_remains_redeemable(self):
         legacy = 'ABCDEFGHJKLM'
@@ -119,8 +130,51 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(self.client.get('/api/qr/' + legacy).status_code, 200)
 
     def test_invalid_codes_are_rejected(self):
-        for code in ('001', '01234', '123A', 'ABCD', '123456789012'):
+        for code in ('001', '01234', '12?A', 'I123', '123456789012'):
             self.assertFalse(valid_code(code))
+
+    def test_public_direct_file_link_and_download_limit(self):
+        response = self.client.post('/api/send', data={
+            'file': (io.BytesIO(b'direct-link'), 'hello.txt'),
+            'ttl': '1h',
+        })
+        self.assertEqual(response.status_code, 201)
+        direct_path = response.json['public_path']
+        self.assertTrue(direct_path.startswith('/f/'))
+        self.assertNotIn(response.json['code'], direct_path)
+        for i in range(5):
+            with self.client.get(direct_path) as result:
+                self.assertEqual(result.status_code, 200)
+                self.assertEqual(result.data, b'direct-link')
+                self.assertIn('attachment', result.headers['Content-Disposition'])
+        self.assertEqual(self.client.get(direct_path).status_code, 404)
+
+    def test_public_direct_text_link(self):
+        response = self.send_text('Direct plain text')
+        url = response.json['public_path']
+        result = self.client.get(url)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.data.decode('utf8'), 'Direct plain text')
+        self.assertIn('text/plain', result.headers['Content-Type'])
+
+    def test_public_combined_link_shows_text_and_download(self):
+        response = self.client.post('/api/send', data={
+            'file': (io.BytesIO(b'test-image'), 'a.png'),
+            'text': 'private note',
+        })
+        direct_path = response.json['public_path']
+        webpage = self.client.get(direct_path)
+        self.assertEqual(webpage.status_code, 200)
+        self.assertIn(b'private note', webpage.data)
+        self.assertIn(b'?download=1', webpage.data)
+        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 5)
+        with self.client.get(direct_path + '?download=1') as file:
+            self.assertEqual(file.status_code, 200)
+            self.assertEqual(file.data, b'test-image')
+
+    def test_public_link_rejects_missing_or_invalid_token(self):
+        self.assertEqual(self.client.get('/f/short').status_code, 404)
+        self.assertEqual(self.client.get('/f/' + 'A' * 22).status_code, 404)
 
     def test_four_digit_access_has_per_ip_rate_limit(self):
         code = self.send_text('safe').json['code']
