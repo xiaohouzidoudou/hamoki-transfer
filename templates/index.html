@@ -52,18 +52,19 @@
         </div>
 
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
+          <div class="summer-intro"><div><span class="intro-kicker">和好奇猴一起出发</span><h1>轻松传文件<br><em>分享更简单</em></h1><p>大文件也能轻松传，安全高效分享给好友</p></div><img src="static/hamoki-avatar.webp" alt="好奇猴探险家" width="128" height="128"></div>
           <div id="drop" class="file-select">
-            <button id="pick" class="file-pick" type="button" aria-expanded="false" aria-controls="picker-menu">
+            <button id="pick" class="file-pick" type="button" aria-expanded="true" aria-controls="picker-menu">
               <span class="file-symbol" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
               </span>
               <span class="pick-copy"><strong>选择文件</strong><small>单次总大小最大 5 GB</small></span>
               <span class="pick-arrow" aria-hidden="true">⌄</span>
             </button>
-            <div class="picker-menu" id="picker-menu" hidden>
-              <button type="button" id="pick-single"><span aria-hidden="true">▤</span>单个文件</button>
-              <button type="button" id="pick-multiple"><span aria-hidden="true">▣</span>多个文件</button>
-              <button type="button" id="pick-folder"><span aria-hidden="true">▱</span>整个文件夹</button>
+            <div class="picker-menu" id="picker-menu">
+              <button type="button" id="pick-single"><span class="menu-icon single" aria-hidden="true">▤</span><span class="menu-copy"><strong>单个文件</strong><small>选择一个文件进行上传</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
+              <button type="button" id="pick-multiple"><span class="menu-icon multiple" aria-hidden="true">▣</span><span class="menu-copy"><strong>多个文件</strong><small>选择多个文件一起上传</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
+              <button type="button" id="pick-folder"><span class="menu-icon folder" aria-hidden="true">▱</span><span class="menu-copy"><strong>整个文件夹</strong><small>选择文件夹，自动打包传送</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
             </div>
             <input type="file" id="file" hidden>
             <input type="file" id="files" multiple hidden>
@@ -74,12 +75,16 @@
             </div>
           </div>
 
-          <label class="text-label" for="text">附带文字（可与图片、文件一起传）</label>
-          <textarea id="text" rows="2" maxlength="65536" placeholder="粘贴文字、链接或备忘…"></textarea>
+          <label class="text-label" for="text"><span aria-hidden="true">✎</span> 也可传一段文字</label>
+          <textarea id="text" rows="2" maxlength="65536" placeholder="在这里输入想分享的文字…"></textarea>
 
-          <div class="row">
-            <div class="row-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> 文件保留时间</div>
-            <select id="ttl" aria-label="文件保留时间"><option value="1h">1 小时</option><option value="24h" selected>24 小时</option><option value="7d">7 天</option></select>
+          <div class="row expiry-selector">
+            <div class="row-label"><span class="expiry-symbol" aria-hidden="true">◷</span><span>自动销毁<small>文件将在设定时间后自动删除</small></span></div>
+            <div class="ttl-options" role="group" aria-label="文件保留时间">
+              <label><input type="radio" name="ttl" value="1d"><span>1天</span></label>
+              <label><input type="radio" name="ttl" value="3d" checked><span>3天</span></label>
+              <label><input type="radio" name="ttl" value="7d"><span>7天</span></label>
+            </div>
           </div>
 
           <div id="upload-progress" class="upload-progress" hidden>
@@ -87,12 +92,12 @@
             <progress id="progress-bar" value="0" max="100"></progress>
           </div>
 
-          <button class="primary full" type="button" id="upload">生成取件码 <span aria-hidden="true">→</span></button>
-          <p class="hint" id="send-tip">无需登录直接上传 · 文件到期后自动删除</p>
+          <button class="primary full" type="button" id="upload"><span aria-hidden="true">➤</span> 立即传送</button>
+          <p class="hint" id="send-tip">✦ 默认 3 天后自动销毁 · 无需登录</p>
         </section>
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
-          <h2>输入取件码</h2>
+          <div class="receive-hero"><h2>领取分享内容</h2><p>输入取件码，或通过好友分享链接直接领取</p><img src="static/hamoki-avatar.webp" alt="" width="96" height="96"></div>
           <input id="code-input" aria-label="取件码" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="输入取件码，例如 A5K7">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
           <div id="found" class="found" hidden>
@@ -142,7 +147,7 @@
           </div>
           <p id="public-link-tip" class="hint">复制给别人即可直接查看或下载，无需输入取件码。</p>
           </div>
-          <div class="qr-share-card">
+          <div class="done-share-grid"><div class="qr-share-card">
             <div class="qr-share-info">
               <div class="section-title"><span class="section-icon qr-icon">▦</span><strong>二维码分享</strong></div>
               <p>好友用手机扫一扫<br>即可打开领取页面</p>
@@ -153,6 +158,7 @@
             <span>分享给好友</span>
             <button id="share-wechat" type="button" aria-label="分享到微信"><span class="social-bubble" aria-hidden="true">微</span> 微信</button>
             <button id="share-qq" type="button" aria-label="分享到QQ"><span class="social-bubble qq" aria-hidden="true">Q</span> QQ</button>
+          </div>
           </div>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
@@ -166,7 +172,7 @@
 
     </div>
   </main>
-  <footer><span>© 好奇猴快传</span><a href="https://github.com/xiaohouzidoudou/hamoki-transfer" target="_blank" rel="noopener noreferrer">开源项目 ↗</a></footer>
+  <footer><span>© 好奇猴快传 · 简单 · 快速 · 安全分享</span></footer>
 </div>
 <dialog id="preview-dialog" class="preview-dialog" aria-label="历史图片预览">
   <div class="preview-toolbar"><strong id="preview-name"></strong><button id="close-preview" type="button" aria-label="关闭图片预览">✕</button></div>
