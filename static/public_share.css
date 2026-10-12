@@ -3,6 +3,9 @@ body.public-share-page{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16
 .public-share-page main{max-width:520px;margin:48px auto;background:#fff;border-radius:20px;padding:28px;box-shadow:0 14px 40px #18283b13}
 .public-share-page h1{font-size:22px;margin:0 0 10px}
 .public-share-page .page-brand{text-align:center}
+.public-share-page .expiry-countdown{display:flex;align-items:center;gap:9px;width:max-content;max-width:100%;margin:0 auto 19px 0;padding:9px 12px;border:1px solid #e5e9f1;border-radius:11px;background:#f5f7fa;font-size:12px;color:#667285}
+.public-share-page .expiry-countdown strong{font-size:12px;font-weight:700;color:#1678e8;white-space:nowrap;font-variant-numeric:tabular-nums}
+.public-share-page .expiry-countdown.expired strong{color:#d92d20}
 .public-share-page .danger-text{color:#d92d20;font-weight:750}
 .public-share-page p{line-height:1.65;color:#606c7b}
 .public-share-page pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7fa;border-radius:12px;padding:16px;max-height:300px;overflow:auto;color:#253040}
@@ -21,5 +24,5 @@ body.public-share-page{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16
 .public-share-page .download[hidden]{display:none!important}
 @keyframes download-spinning{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.public-share-page .loading-ring{animation:none}}
-@media(prefers-color-scheme:dark){.public-share-page .danger-text{color:#ff6257}}
+@media(prefers-color-scheme:dark){.public-share-page .danger-text{color:#ff6257}.public-share-page .expiry-countdown{background:#151a22;border-color:#353d4b;color:#a6b3c0}.public-share-page .expiry-countdown strong{color:#78b7ff}.public-share-page .expiry-countdown.expired strong{color:#ff6257}}
 @media(prefers-color-scheme:dark){.public-share-page .download-state{background:#1a3249;border-color:#314e70}.public-share-page .loading-ring{border-color:#31506c;border-top-color:#78b7ff}}
