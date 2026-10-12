@@ -348,9 +348,14 @@ async function copyText(value, button, successLabel) {
   const copied = await writeClipboard(value);
   if (copied) {
     if (button) {
-      const previous = button.textContent;
-      button.textContent = successLabel;
-      window.setTimeout(() => { button.textContent = previous; }, 1800);
+      if (button.id === 'copy-code') {
+        button.dataset.copied = 'true';
+        window.setTimeout(() => { delete button.dataset.copied; }, 1800);
+      } else {
+        const previous = button.textContent;
+        button.textContent = successLabel;
+        window.setTimeout(() => { button.textContent = previous; }, 1800);
+      }
     } else {
       flash('取件码已复制');
     }
@@ -359,7 +364,7 @@ async function copyText(value, button, successLabel) {
   }
   return copied;
 }
-$('copy-code').onclick = () => copyText($('done-code').textContent, null, '');
+$('copy-code').onclick = () => copyText($('done-code').textContent, $('copy-code'), '已复制');
 $('copy-link').onclick = () => copyText(pickupUrl, $('copy-link'), '已复制');
 $('copy-public-link').onclick = () => copyText($('copy-public-link').dataset.url, $('copy-public-link'), '已复制');
 
