@@ -6,6 +6,66 @@ const appRoot = new URL('./', location.href).pathname;
 const appUrl = path => appRoot + path.replace(/^\/+/, '');
 let selectedFile = null;
 let pickupUrl = '';
+const HISTORY_KEY = 'hamoki-transfer-sent-v1';
+const historyTtl = { '1h': 3600, '24h': 86400, '7d': 604800 };
+
+function readSentHistory() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    return Array.isArray(rows) ? rows.filter(row =>
+      row && typeof row.code === 'string' && /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12}$/.test(row.code)
+    ).slice(0, 60) : [];
+  } catch { return []; }
+}
+function rememberSent(item) {
+  const previous = readSentHistory().filter(row => row.code !== item.code);
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify([item, ...previous].slice(0, 60))); }
+  catch { flash('上传成功，但浏览器不允许保存历史记录。请先复制取件码。'); }
+}
+function formatWhen(seconds) {
+  const date = new Date(seconds * 1000);
+  return Number.isFinite(date.valueOf()) ? date.toLocaleString('zh-CN', { hour12: false }) : '未知时间';
+}
+function displayDone(item) {
+  pickupUrl = location.origin + appRoot + '?code=' + encodeURIComponent(item.code);
+  $('done-code').textContent = item.code;
+  $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(item.code));
+  $('copy-link').textContent = '复制领取链接';
+  pane('done');
+}
+function renderHistory() {
+  const target = $('history-list');
+  target.replaceChildren();
+  const rows = readSentHistory();
+  if (!rows.length) {
+    const empty = document.createElement('p');
+    empty.className = 'history-empty';
+    empty.textContent = '还没有上传记录，发送成功后会自动保存在这里。';
+    target.append(empty);
+    return;
+  }
+  for (const item of rows) {
+    const expired = Number(item.expires) <= Math.floor(Date.now() / 1000);
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    const info = document.createElement('div');
+    info.className = 'history-info';
+    const name = document.createElement('strong');
+    name.textContent = item.has_file && item.has_text ? item.name + ' + 文字'
+      : item.has_file ? item.name : '文字分享';
+    const meta = document.createElement('small');
+    meta.textContent = item.code + ' · ' + formatWhen(item.created) + (expired ? ' · 已过期' : '');
+    info.append(name, meta);
+    const button = document.createElement('button');
+    button.className = 'secondary history-open';
+    button.type = 'button';
+    button.textContent = expired ? '已过期' : '查看';
+    button.disabled = expired;
+    button.addEventListener('click', () => displayDone(item));
+    row.append(info, button);
+    target.append(row);
+  }
+}
 
 // Remove obsolete upload keys from earlier private-link versions.
 sessionStorage.removeItem('hamoki_upload_key');
@@ -18,13 +78,14 @@ function flash(message) {
   $('message').textContent = message || '';
 }
 function pane(name) {
-  ['send', 'get', 'done'].forEach(item => {
+  ['send', 'get', 'history', 'done'].forEach(item => {
     $('pane-' + item).hidden = item !== name;
   });
-  $('tab-send').classList.toggle('active', name === 'send');
-  $('tab-get').classList.toggle('active', name === 'get');
-  $('tab-send').setAttribute('aria-selected', String(name === 'send'));
-  $('tab-get').setAttribute('aria-selected', String(name === 'get'));
+  for (const tab of ['send', 'get', 'history']) {
+    $('tab-' + tab).classList.toggle('active', name === tab);
+    $('tab-' + tab).setAttribute('aria-selected', String(name === tab));
+  }
+  if (name === 'history') renderHistory();
   flash('');
 }
 function formatSize(bytes) {
@@ -39,7 +100,6 @@ function setFile(file) {
     ? selectedFile.name + ' · ' + formatSize(selectedFile.size) : '';
   $('clear-file').hidden = !selectedFile;
   $('selected-file').hidden = !selectedFile;
-  if (selectedFile) $('text').value = '';
 }
 $('pick').onclick = () => $('file').click();
 $('drop').addEventListener('click', event => {
@@ -75,14 +135,9 @@ $('drop').addEventListener('drop', event => {
   const file = event.dataTransfer?.files?.[0];
   if (file) setFile(file);
 });
-$('text').addEventListener('input', () => {
-  if ($('text').value.trim() && selectedFile) {
-    $('file').value = '';
-    setFile(null);
-  }
-});
 $('tab-send').onclick = () => pane('send');
 $('tab-get').onclick = () => pane('get');
+$('tab-history').onclick = () => pane('history');
 
 async function readJson(response) {
   let body;
@@ -121,7 +176,7 @@ $('upload').onclick = async () => {
   const form = new FormData();
   form.append('ttl', $('ttl').value);
   if (selectedFile) form.append('file', selectedFile);
-  else form.append('text', text);
+  if (text) form.append('text', text);
   const button = $('upload');
   button.disabled = true;
   $('upload-progress').hidden = false;
@@ -130,11 +185,12 @@ $('upload').onclick = async () => {
   flash('');
   try {
     const response = await sendForm(form);
-    pickupUrl = location.origin + appRoot + '?code=' + encodeURIComponent(response.code);
-    $('done-code').textContent = response.code;
-    $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(response.code));
-    $('copy-link').textContent = '复制领取链接';
-    pane('done');
+    rememberSent({
+      code: response.code, name: response.name, has_file: response.has_file,
+      has_text: response.has_text, created: response.created,
+      expires: response.expires || response.created + historyTtl[response.ttl]
+    });
+    displayDone(response);
   } catch (error) {
     flash(error.message);
   } finally {
@@ -172,13 +228,19 @@ $('lookup').onclick = async () => {
   flash('正在查找…');
   try {
     const info = await readJson(await fetch(appUrl('api/item/' + encodeURIComponent(code))));
-    $('found-name').textContent = info.name;
-    $('found-details').textContent = info.kind === 'text'
-      ? '文字内容 · 剩余 ' + info.remaining + ' 次领取'
-      : formatSize(info.size) + ' · 剩余 ' + info.remaining + ' 次领取';
+    const hasFile = info.has_file ?? info.kind === 'file';
+    const hasText = info.has_text ?? info.kind === 'text';
+    $('found-name').textContent = hasFile && hasText ? info.name + ' · 附带文字' : info.name;
+    $('found-details').textContent = hasFile && hasText
+      ? formatSize(info.size) + ' · 图片/文件和文字都可领取 · 剩余 ' + info.remaining + ' 次文件下载'
+      : hasFile
+        ? formatSize(info.size) + ' · 剩余 ' + info.remaining + ' 次下载'
+        : '文字内容 · 剩余 ' + info.remaining + ' 次领取';
     $('claim').dataset.code = code;
-    $('claim').dataset.kind = info.kind;
-    $('claim').textContent = info.kind === 'text' ? '领取文字' : '下载文件';
+    $('claim').hidden = !hasText;
+    $('download-file').dataset.code = code;
+    $('download-file').hidden = !hasFile;
+    $('download-file').textContent = '下载 ' + (hasFile ? info.name : '文件');
     $('received-text').hidden = true;
     $('copy-text').hidden = true;
     $('found').hidden = false;
@@ -189,10 +251,6 @@ $('lookup').onclick = async () => {
 };
 $('claim').onclick = async () => {
   const code = $('claim').dataset.code;
-  if ($('claim').dataset.kind === 'file') {
-    location.href = appUrl('d/' + encodeURIComponent(code));
-    return;
-  }
   try {
     const info = await readJson(await fetch(appUrl('api/text/' + encodeURIComponent(code)), { method: 'POST' }));
     $('received-text').textContent = info.text;
@@ -202,6 +260,9 @@ $('claim').onclick = async () => {
   } catch (error) {
     flash(error.message);
   }
+};
+$('download-file').onclick = () => {
+  location.href = appUrl('d/' + encodeURIComponent($('download-file').dataset.code));
 };
 $('copy-text').onclick = () => copyText($('received-text').textContent, $('copy-text'), '已复制');
 $('code-input').addEventListener('keydown', event => {
