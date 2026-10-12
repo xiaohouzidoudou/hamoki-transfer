@@ -268,6 +268,16 @@ def create_app(test_config=None):
     @app.post('/api/send')
     def upload():
         limit('upload', 10)
+        now = int(time.time())
+        guest_bypass = upload_unlocked()
+        visitor_hash = guest_ip_hash() if not guest_bypass else ''
+        if not guest_bypass and request.content_length is not None:
+            # Fast reject clearly oversized guest requests before parsing uploads.
+            with db() as con:
+                already_used = guest_used(con, now, visitor_hash)
+            remaining = max(0, app.config['GUEST_DAILY_BYTES'] - already_used)
+            if request.content_length > remaining + 2 * 1024 * 1024:
+                return guest_quota_error(already_used)
         ttl = request.form.get('ttl', '3d')
         if ttl not in TTL:
             abort(400, description='保存时间不正确')
@@ -284,16 +294,6 @@ def create_app(test_config=None):
         text_bytes = len(body.encode('utf-8'))
         if text_bytes > 65536:
             abort(400, description='文字长度不能超过 65536 字节')
-        now = int(time.time())
-        guest_bypass = upload_unlocked()
-        visitor_hash = guest_ip_hash() if not guest_bypass else ''
-        if not guest_bypass and request.content_length is not None:
-            # Fast reject clearly oversized guest requests before buffering files.
-            with db() as con:
-                already_used = guest_used(con, now, visitor_hash)
-            remaining = max(0, app.config['GUEST_DAILY_BYTES'] - already_used)
-            if request.content_length > remaining + 2 * 1024 * 1024:
-                return guest_quota_error(already_used)
         code = make_code()
         kind = 'file' if has_file else 'text'
         pending = None
