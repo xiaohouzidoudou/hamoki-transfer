@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import hmac
 import os
 from pathlib import Path
 import secrets
@@ -23,6 +24,28 @@ def digest(value):
 def setup_private(app, db, files, lock, limit):
     storage = files.parent / "private-files"
     storage.mkdir(exist_ok=True)
+
+    def room_invite(room_id, nonce):
+        """Derive a stable high-entropy code without storing the plaintext in SQLite."""
+        key_file = files.parent / ".private-invite-secret"
+        try:
+            key = key_file.read_bytes()
+        except FileNotFoundError:
+            try:
+                fd = os.open(key_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+                with os.fdopen(fd, "wb") as output:
+                    output.write(secrets.token_bytes(32))
+                    output.flush()
+                    os.fsync(output.fileno())
+            except FileExistsError:
+                pass
+            key = key_file.read_bytes()
+        if len(key) != 32:
+            raise RuntimeError("private invite secret is missing or invalid")
+        bits = hmac.new(key, (room_id + ":" + nonce).encode("ascii"), hashlib.sha256).digest()
+        letters = "".join(CHARS[n & 31] for n in bits[:24])
+        return "HK-" + "-".join(letters[i:i + 6] for i in range(0, 24, 6))
+
     with db() as con:
         con.execute("""CREATE TABLE IF NOT EXISTS private_rooms (
             id TEXT PRIMARY KEY,
@@ -44,6 +67,11 @@ def setup_private(app, db, files, lock, limit):
             seen INTEGER NOT NULL
         )""")
         con.execute("CREATE INDEX IF NOT EXISTS idx_private_devices_room ON private_devices(room_id)")
+        # Existing rooms stored ONLY a one-way invite hash; never pretend to
+        # recover the original code. Re-issue one only on an explicit request.
+        room_cols = {row["name"] for row in con.execute("PRAGMA table_info(private_rooms)")}
+        if "invite_nonce" not in room_cols:
+            con.execute("ALTER TABLE private_rooms ADD COLUMN invite_nonce TEXT NOT NULL DEFAULT ''")
 
     def guard():
         # Non-simple custom header rejects cross-site HTML form CSRF; no CORS is enabled.
@@ -91,14 +119,11 @@ def setup_private(app, db, files, lock, limit):
             abort(400, description="设备名称不正确")
         label = label.strip() or "我的设备"
         with lock, db() as con:
-            for _ in range(4):
-                invite = "HK-" + "-".join("".join(secrets.choice(CHARS) for _ in range(6)) for _ in range(4))
-                if not con.execute("SELECT 1 FROM private_rooms WHERE invite_hash=?", (digest(invite),)).fetchone():
-                    break
-            else:
-                abort(503)
             room_id = secrets.token_hex(16)
-            con.execute("INSERT INTO private_rooms (id,invite_hash) VALUES (?,?)", (room_id, digest(invite)))
+            nonce = secrets.token_hex(16)
+            invite = room_invite(room_id, nonce)
+            con.execute("INSERT INTO private_rooms (id,invite_hash,invite_nonce) VALUES (?,?,?)",
+                        (room_id, digest(invite), nonce))
             token, device_id = enroll(con, room_id, label)
         return set_cookie(make_response(jsonify(paired=True, invite=invite, device_id=device_id), 201), token)
 
@@ -134,6 +159,37 @@ def setup_private(app, db, files, lock, limit):
         # Refresh the per-browser cookie lifetime on a normal visit.
         response = make_response(jsonify(paired=True, device_id=device["id"], label=device["label"], devices=members))
         return set_cookie(response, request.cookies[COOKIE])
+
+    @app.get("/api/private/invite")
+    def private_invite():
+        device = auth()
+        with db() as con:
+            room = con.execute("SELECT id,invite_hash,invite_nonce FROM private_rooms WHERE id=?",
+                               (device["room_id"],)).fetchone()
+        if room is None:
+            abort(404)
+        if not room["invite_nonce"]:
+            return jsonify(available=False, needs_reissue=True)
+        invite = room_invite(room["id"], room["invite_nonce"])
+        if digest(invite) != room["invite_hash"]:
+            # Missing/rotated server key: do not falsely display an invalid invite.
+            return jsonify(available=False, needs_reissue=True)
+        return jsonify(available=True, invite=invite)
+
+    @app.post("/api/private/invite/reissue")
+    def private_invite_reissue():
+        guard()
+        device = auth()
+        limit("private-invite-reissue-" + device["id"], 5, 3600)
+        with lock, db() as con:
+            room = con.execute("SELECT id FROM private_rooms WHERE id=?", (device["room_id"],)).fetchone()
+            if room is None:
+                abort(404)
+            nonce = secrets.token_hex(16)
+            invite = room_invite(room["id"], nonce)
+            con.execute("UPDATE private_rooms SET invite_hash=?,invite_nonce=? WHERE id=?",
+                        (digest(invite), nonce, room["id"]))
+        return jsonify(available=True, invite=invite)
 
     @app.get("/api/private/latest")
     def private_latest():
