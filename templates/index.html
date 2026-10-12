@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="static/icons.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
-  <script src="static/private.js" defer></script>
-  <link rel="stylesheet" href="static/private.css">
+  <script src="static/private.js?v=20261012-inline-code-1" defer></script>
+  <link rel="stylesheet" href="static/private.css?v=20261012-inline-code-1">
 </head>
 <body>
 <div class="page-glow" aria-hidden="true"></div>
@@ -73,8 +73,8 @@
     <div id="private-file-selection" class="private-file-selection" hidden><div class="private-file-selection-head"><strong>已选择文件</strong><button id="private-files-clear" class="private-text-button" type="button">全部移除</button></div><div id="private-selected-list"></div></div><p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
   </section>
   <div id="private-settings" class="private-panel" hidden><div class="private-section-heading"><h2>绑定设备</h2><button class="private-text-button" id="private-settings-close" type="button">收起</button></div>
-    <p class="private-muted">绑定不会自动过期；清理浏览器数据后，需要用原配对码再次绑定。</p>
-    <div class="private-invite-panel"><strong>添加其他设备</strong><p class="private-muted">新设备打开快传网站后，输入下面的配对码即可加入。请勿发给陌生人。</p><div class="private-invite-box"><code id="private-invite-display">点击查看配对码</code><button id="private-invite-show" type="button" class="secondary">查看配对码</button><button id="private-invite-copy" type="button" class="secondary" hidden>复制</button></div><p id="private-invite-notice" class="private-muted"></p></div><div id="private-device-list"></div><button id="private-leave" class="secondary" type="button">解除本机绑定</button>
+    <p class="private-muted">绑定长期有效；如果浏览器数据被清除，可以使用下方当前配对码重新加入。</p>
+    <div class="private-invite-panel"><strong>添加其他设备</strong><p class="private-muted">新设备打开快传网站后，输入下面的配对码即可加入。请勿发给陌生人。</p><div class="private-invite-box"><code id="private-invite-display" aria-live="polite">正在读取配对码…</code><button id="private-invite-copy" type="button" class="secondary" hidden>复制</button></div><p id="private-invite-notice" class="private-muted"></p></div><div id="private-device-list"></div><button id="private-leave" class="secondary" type="button">解除本机绑定</button>
   </div>
 </div>
 <p id="private-message" role="status" aria-live="polite" class="private-message"></p>

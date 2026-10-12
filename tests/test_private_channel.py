@@ -82,6 +82,16 @@ class PairedTransferTests(unittest.TestCase):
         self.assertEqual(self.pc.post('/api/private/rename',json={'device_id':'0'*24,'name':'别人设备'},headers=self.headers).status_code,404)
         self.assertTrue(self.phone.get('/api/private/me').json['paired'])
 
+    def test_inline_pairing_interface_has_no_reveal_button(self):
+        html = self.pc.get('/').data.decode('utf-8')
+        self.assertIn('id="private-invite-display"', html)
+        self.assertIn('id="private-invite-copy"', html)
+        self.assertNotIn('id="private-invite-show"', html)
+        script = (Path(__file__).resolve().parents[1] / 'static' / 'private.js').read_text()
+        self.assertIn("el('private-settings-toggle').onclick=openSettings", script)
+        self.assertIn("mutation('invite/reissue',{})", script)
+        self.assertNotIn("window.prompt('保存此唯一配对码", script)
+
     def test_reject_unpaired_and_csrf(self):
         self.assertEqual(self.phone.get('/api/private/latest').status_code,401)
         self.assertEqual(self.pc.post('/api/private/create',json={'label':'PC'}).status_code,403)
