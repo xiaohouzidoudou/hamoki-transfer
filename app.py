@@ -13,11 +13,13 @@ from urllib.parse import quote
 
 import qrcode
 from qrcode.image.svg import SvgPathImage
-from flask import Flask, abort, jsonify, render_template, request, send_file
+from flask import Flask, abort, jsonify, render_template, request, send_file, Response
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
+DIGITS = '23456789'
+LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 TTL = {'1h': 3600, '24h': 86400, '7d': 7 * 86400}
 LOCK = threading.RLock()
 RATE_LOCK = threading.Lock()
@@ -30,12 +32,20 @@ class InsufficientStorage(HTTPException):
 
 
 def make_code():
-    # Four decimal digits, including leading zeros (0000-9999).
-    return f'{secrets.randbelow(10000):04d}'
+    # Always include both a digit and a letter; omit easy-to-confuse I/O/0/1.
+    chars = [
+        secrets.choice(DIGITS),
+        secrets.choice(LETTERS),
+        secrets.choice(ALPHABET),
+        secrets.choice(ALPHABET),
+    ]
+    secrets.SystemRandom().shuffle(chars)
+    return ''.join(chars)
 
 
 def valid_code(code):
-    return (len(code) == 4 and code.isascii() and code.isdecimal()) or (
+    # Older four-digit numerical and original twelve-character codes remain valid.
+    return (len(code) == 4 and all(ch in ALPHABET + '01' for ch in code)) or (
         len(code) == 12 and all(ch in ALPHABET for ch in code)
     )
 
@@ -81,6 +91,12 @@ def create_app(test_config=None):
             created INTEGER NOT NULL
         )''')
         con.execute('CREATE INDEX IF NOT EXISTS idx_shares_expires ON shares(expires)')
+        # Separate capability URLs: short manual codes and long direct links.
+        # Keeps the existing shares schema and old pickup codes untouched.
+        con.execute('''CREATE TABLE IF NOT EXISTS public_links (
+            token TEXT PRIMARY KEY,
+            code TEXT NOT NULL UNIQUE
+        )''')
 
     def cleanup():
         now = int(time.time())
@@ -90,6 +106,7 @@ def create_app(test_config=None):
                 if row['kind'] == 'file':
                     (files / row['code']).unlink(missing_ok=True)
             con.execute('DELETE FROM shares WHERE expires <= ?', (now,))
+            con.execute('DELETE FROM public_links WHERE code NOT IN (SELECT code FROM shares)')
 
     def clean_loop():
         while True:
@@ -125,7 +142,7 @@ def create_app(test_config=None):
             "default-src 'none'; script-src 'self'; style-src 'self'; "
             "img-src 'self'; connect-src 'self'; form-action 'self'; frame-ancestors 'none'"
         )
-        if request.path.startswith('/api/') or request.path.startswith('/d/'):
+        if request.path.startswith(('/api/', '/d/', '/f/')):
             resp.headers['Cache-Control'] = 'no-store'
         return resp
 
@@ -192,12 +209,21 @@ def create_app(test_config=None):
                 if pending:
                     os.replace(pending, files / code)
                 con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)', (code, kind, name, size, body, now + TTL[ttl], 5, now))
+                token = secrets.token_urlsafe(15)
+                for _ in range(5):
+                    if not con.execute('SELECT 1 FROM public_links WHERE token=?', (token,)).fetchone():
+                        break
+                    token = secrets.token_urlsafe(15)
+                else:
+                    abort(503, description='生成分享链接失败，请重试')
+                con.execute('INSERT INTO public_links (token, code) VALUES (?, ?)', (token, code))
         finally:
             if pending:
                 pending.unlink(missing_ok=True)
         return jsonify(
             code=code, ttl=ttl, size=size, name=name,
-            has_text=bool(body), has_file=has_file, created=now, expires=now + TTL[ttl]
+            has_text=bool(body), has_file=has_file, created=now, expires=now + TTL[ttl],
+            public_path='/f/' + token
         ), 201
 
     def lookup_share(code):
@@ -211,7 +237,7 @@ def create_app(test_config=None):
 
     def limit_short_code_access(code):
         if len(code) == 4:
-            # Short numeric codes can be guessed: throttle ALL lookup and pickup
+            # Short codes can be guessed: throttle ALL lookup and pickup
             # paths together per client IP, including direct download URLs.
             limit('short-code-access-minute', 12)
             limit('short-code-access-hour', 60, 3600)
@@ -263,6 +289,34 @@ def create_app(test_config=None):
         if not path.is_file():
             abort(404, description='文件不存在或已被删除')
         return send_file(path, mimetype='application/octet-stream', as_attachment=True, download_name=row['name'], max_age=0)
+
+    @app.get('/f/<token>')
+    def public_link(token):
+        # A long random token allows direct delivery without entering a short code.
+        if not 16 <= len(token) <= 64 or any(ch not in ALPHABET + '01abcdefghijklmnopqrstuvwxyz-_' for ch in token):
+            abort(404)
+        limit('public-link', 40)
+        with db() as con:
+            row = con.execute(
+                '''SELECT s.* FROM public_links p JOIN shares s ON s.code=p.code
+                   WHERE p.token=? AND s.expires>? AND s.remaining>0''',
+                (token, int(time.time()))
+            ).fetchone()
+        if row is None:
+            abort(404, description='分享链接不存在或已经过期')
+        if row['kind'] == 'text':
+            # Plain UTF-8 text is immediately readable without a pickup form.
+            item = consume(row['code'], 'text')
+            return Response(item['body'], content_type='text/plain; charset=utf-8')
+        if row['body'] and request.args.get('download') != '1':
+            # Keep the attached text visible rather than silently discarding it.
+            return render_template('public_share.html', token=token, name=row['name'], text=row['body'])
+        path = files / row['code']
+        if not path.is_file():
+            abort(404, description='文件不存在或已经删除')
+        item = consume(row['code'], 'file')
+        return send_file(path, mimetype='application/octet-stream',
+                         as_attachment=True, download_name=item['name'], max_age=0)
 
     @app.get('/api/qr/<code>')
     def qr(code):
