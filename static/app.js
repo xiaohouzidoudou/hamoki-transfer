@@ -8,6 +8,7 @@ let selectedFile = null;
 let pickupUrl = '';
 const HISTORY_KEY = 'hamoki-transfer-sent-v1';
 const historyTtl = { '1h': 3600, '24h': 86400, '7d': 604800 };
+const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 
 function readSentHistory() {
   try {
@@ -40,6 +41,8 @@ function displayDone(item) {
   $('public-link-tip').textContent = item.public_path
     ? '发给别人就能直接领取，无需输入取件码。'
     : '旧记录使用原来的领取链接，新上传会生成直接访问的公共链接。';
+  $('pane-done').querySelector('[data-expiry-countdown]').dataset.expires = String(item.expires || item.created + historyTtl[item.ttl] || 0);
+  window.hamokiRefreshCountdown?.();
   $('done-code').textContent = item.code;
   $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(item.code));
   $('copy-link').textContent = '复制领取链接';
@@ -107,7 +110,14 @@ function formatSize(bytes) {
   return (bytes / 1073741824).toFixed(2) + ' GB';
 }
 function setFile(file) {
-  selectedFile = file || null;
+  if (file && file.size > MAX_FILE_BYTES) {
+    selectedFile = null;
+    $('file').value = '';
+    flash('单个文件不能超过 5 GB，请选择较小的文件。');
+  } else {
+    selectedFile = file || null;
+    if (file) flash('');
+  }
   $('file-info').textContent = selectedFile
     ? selectedFile.name + ' · ' + formatSize(selectedFile.size) : '';
   $('clear-file').hidden = !selectedFile;
@@ -185,6 +195,7 @@ function sendForm(form) {
 $('upload').onclick = async () => {
   const text = $('text').value.trim();
   if (!selectedFile && !text) { flash('请先选择文件，或输入一段文字。'); return; }
+  if (selectedFile && selectedFile.size > MAX_FILE_BYTES) { flash('单个文件不能超过 5 GB'); return; }
   const form = new FormData();
   form.append('ttl', $('ttl').value);
   if (selectedFile) form.append('file', selectedFile);
