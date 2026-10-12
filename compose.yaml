@@ -7,13 +7,12 @@ services:
       - "127.0.0.1:8018:8000"
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-}
-      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-250}
-      TOTAL_LIMIT_MB: ${TOTAL_LIMIT_MB:-4096}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5120}
+      TOTAL_LIMIT_MB: ${TOTAL_LIMIT_MB:-10240}
     volumes:
       - ./data:/data
+      - ./upload-tmp:/tmp
     read_only: true
-    tmpfs:
-      - /tmp
     security_opt:
       - no-new-privileges:true
     cap_drop:
