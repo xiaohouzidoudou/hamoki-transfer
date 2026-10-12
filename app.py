@@ -4,6 +4,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 import io
 import mimetypes
+import zipfile
 import os
 import secrets
 import sqlite3
@@ -67,7 +68,7 @@ def create_app(test_config=None):
         app.config.update(test_config)
     # Allow multipart framing overhead while enforcing the exact file-byte limit.
     app.config['MAX_FILE_BYTES'] = int(app.config['MAX_UPLOAD_MB']) * 1024 * 1024
-    app.config['MAX_CONTENT_LENGTH'] = app.config['MAX_FILE_BYTES'] + 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = app.config['MAX_FILE_BYTES'] + 2 * 1024 * 1024
     # Only our loopback-bound reverse proxy is trusted to append the client IP.
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
@@ -173,10 +174,14 @@ def create_app(test_config=None):
         ttl = request.form.get('ttl', '24h')
         if ttl not in TTL:
             abort(400, description='保存时间不正确')
-        uploaded = request.files.get('file')
-        body = request.form.get('text', '')
-        body = body.strip()
-        has_file = bool(uploaded and uploaded.filename)
+        uploads = [item for item in request.files.getlist('file') if item.filename]
+        if len(uploads) > 500:
+            abort(400, description='一次最多选择 500 个文件')
+        mode = request.form.get('selection', 'single')
+        if mode not in ('single', 'multiple', 'folder'):
+            abort(400, description='文件选择方式不正确')
+        body = request.form.get('text', '').strip()
+        has_file = bool(uploads)
         if not has_file and not body:
             abort(400, description='请选择文件或输入文字，可以同时发送')
         text_bytes = len(body.encode('utf-8'))
@@ -187,17 +192,56 @@ def create_app(test_config=None):
         kind = 'file' if has_file else 'text'
         pending = None
         if kind == 'file':
-            name = uploaded.filename.replace('\\', '/').split('/')[-1].strip()[:200]
-            if not name:
-                abort(400, description='文件名不正确')
+            as_zip = len(uploads) > 1 or mode == 'folder'
             pending = files / ('.' + secrets.token_hex(16) + '.upload')
             try:
-                uploaded.save(pending)
-                size = pending.stat().st_size
-                if size == 0:
-                    abort(400, description='不能上传空文件')
-                if size > app.config['MAX_FILE_BYTES']:
-                    abort(413, description='单个文件不能超过 5 GB')
+                if as_zip:
+                    total = 0
+                    names = set()
+                    with zipfile.ZipFile(pending, 'w', compression=zipfile.ZIP_STORED,
+                                         allowZip64=True) as archive:
+                        for uploaded in uploads:
+                            # Retain folder structure inside ZIP but never trust client paths.
+                            raw = uploaded.filename.replace('\\', '/')
+                            components = raw.split('/')
+                            if (len(components) > 16 or any(
+                                not part or part in ('.', '..') or ':' in part or
+                                len(part) > 200 or any(ord(ch) < 32 for ch in part)
+                                for part in components
+                            )):
+                                abort(400, description='文件夹中存在不安全的文件名')
+                            entry = '/'.join(components if mode == 'folder' else components[-1:])
+                            if entry in names:
+                                abort(400, description='包含重名文件，请重命名后重试')
+                            names.add(entry)
+                            with archive.open(entry, 'w', force_zip64=True) as target:
+                                while True:
+                                    chunk = uploaded.stream.read(1024 * 1024)
+                                    if not chunk:
+                                        break
+                                    total += len(chunk)
+                                    if total > app.config['MAX_FILE_BYTES'] - 1024 * 1024:
+                                        abort(413, description='文件总大小不能超过 5 GB')
+                                    target.write(chunk)
+                    size = pending.stat().st_size
+                    if size > app.config['MAX_FILE_BYTES']:
+                        abort(413, description='文件总大小不能超过 5 GB')
+                    if mode == 'folder':
+                        folder = uploads[0].filename.replace('\\', '/').split('/')[0].strip()
+                        name = (folder[:150] or '文件夹') + '.zip'
+                    else:
+                        name = f'{len(uploads)}个文件.zip'
+                else:
+                    uploaded = uploads[0]
+                    name = uploaded.filename.replace('\\', '/').split('/')[-1].strip()[:200]
+                    if not name:
+                        abort(400, description='文件名不正确')
+                    uploaded.save(pending)
+                    size = pending.stat().st_size
+                    if size == 0:
+                        abort(400, description='不能上传空文件')
+                    if size > app.config['MAX_FILE_BYTES']:
+                        abort(413, description='单个文件不能超过 5 GB')
             except Exception:
                 pending.unlink(missing_ok=True)
                 raise
@@ -313,6 +357,12 @@ def create_app(test_config=None):
             ).fetchone()
         if row is None:
             abort(404, description='分享链接不存在或已经过期')
+        if request.args.get('preview') == '1':
+            if row['kind'] != 'file':
+                abort(404)
+            path = files / row['code']
+            return send_file(path, mimetype=safe_image_type(path, row['name']),
+                             as_attachment=False, max_age=0)
         if row['kind'] == 'text':
             # Text-only links still use one of the ten available text pickups.
             item = consume(row['code'], 'text')
@@ -329,6 +379,36 @@ def create_app(test_config=None):
         item = consume(row['code'], 'file')
         return send_file(path, mimetype='application/octet-stream',
                          as_attachment=True, download_name=item['name'], max_age=0)
+
+    def safe_image_type(path, name):
+        extension = Path(name).suffix.lower()
+        types = {
+            '.png': ('image/png', lambda v: v.startswith(b'\x89PNG\r\n\x1a\n')),
+            '.jpg': ('image/jpeg', lambda v: v.startswith(b'\xff\xd8\xff')),
+            '.jpeg': ('image/jpeg', lambda v: v.startswith(b'\xff\xd8\xff')),
+            '.gif': ('image/gif', lambda v: v.startswith((b'GIF87a', b'GIF89a'))),
+            '.webp': ('image/webp', lambda v: v.startswith(b'RIFF') and v[8:12] == b'WEBP'),
+        }
+        if extension not in types or not path.is_file():
+            abort(404, description='该文件不支持在线图片预览')
+        with path.open('rb') as stream:
+            signature = stream.read(16)
+        mimetype, check = types[extension]
+        if not check(signature):
+            abort(404, description='该文件不支持在线图片预览')
+        return mimetype
+
+    @app.get('/api/preview/<code>')
+    def preview(code):
+        limit('preview', 30)
+        limit_short_code_access(code)
+        row = lookup_share(code.upper())
+        if row['kind'] != 'file':
+            abort(404, description='不是图片')
+        path = files / row['code']
+        mimetype = safe_image_type(path, row['name'])
+        # Viewing an image does not spend a pickup/download.
+        return send_file(path, mimetype=mimetype, as_attachment=False, max_age=0)
 
     @app.get('/api/qr/<code>')
     def qr(code):
