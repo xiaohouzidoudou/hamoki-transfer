@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="static/style.css">
   <link rel="stylesheet" href="static/brand.css">
   <link rel="stylesheet" href="static/summer.css">
+  <link rel="stylesheet" href="static/motion.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
 </head>
@@ -37,7 +38,7 @@
   <main>
     <div class="workspace">
       <div class="card">
-        <div class="tabs" role="tablist" aria-label="文件传递">
+        <div class="tabs" data-index="0" role="tablist" aria-label="文件传递">
           <button id="tab-send" class="active" type="button" role="tab" aria-controls="pane-send" aria-selected="true">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
             寄文件
@@ -81,7 +82,7 @@
 
           <div class="row expiry-selector">
             <div class="row-label"><span class="expiry-symbol" aria-hidden="true">◷</span><span>自动销毁<small>文件将在设定时间后自动删除</small></span></div>
-            <div class="ttl-options" role="group" aria-label="文件保留时间">
+            <div class="ttl-options" data-index="1" role="group" aria-label="文件保留时间">
               <label><input type="radio" name="ttl" value="1d"><span>1天</span></label>
               <label><input type="radio" name="ttl" value="3d" checked><span>3天</span></label>
               <label><input type="radio" name="ttl" value="7d"><span>7天</span></label>
