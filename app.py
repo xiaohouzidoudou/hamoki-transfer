@@ -293,7 +293,7 @@ def create_app(test_config=None):
     @app.get('/f/<token>')
     def public_link(token):
         # A long random token allows direct delivery without entering a short code.
-        if not 16 <= len(token) <= 64 or any(ch not in ALPHABET + '01abcdefghijklmnopqrstuvwxyz-_' for ch in token):
+        if not 16 <= len(token) <= 64 or any(ch not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_' for ch in token):
             abort(404)
         limit('public-link', 40)
         with db() as con:
