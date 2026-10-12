@@ -37,6 +37,8 @@ class HamokiTest(unittest.TestCase):
         self.assertTrue(svg.data.startswith(b'<?xml') or b'<svg' in svg.data)
         for i in range(10):
             self.assertEqual(self.client.post('/api/text/' + code).json['text'], 'https://example.net')
+        # Reset the independent per-IP anti-guessing budget before checking exhaustion.
+        RATE.clear()
         self.assertEqual(self.client.post('/api/text/' + code).status_code, 404)
 
     def test_file_upload_and_download(self):
