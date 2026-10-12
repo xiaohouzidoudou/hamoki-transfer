@@ -92,6 +92,18 @@ class PairedTransferTests(unittest.TestCase):
         self.assertIn("mutation('invite/reissue',{})", script)
         self.assertNotIn("window.prompt('保存此唯一配对码", script)
 
+    def test_private_drag_drop_is_selectable_and_removable(self):
+        html = self.pc.get('/').data.decode('utf-8')
+        self.assertIn('id="private-send-zone"', html)
+        self.assertIn('id="private-file-selection"', html)
+        self.assertIn('id="private-files-clear"', html)
+        source = (Path(__file__).resolve().parents[1] / 'static' / 'private.js').read_text()
+        self.assertIn("privateDropZone.addEventListener('drop'", source)
+        self.assertIn('event.dataTransfer?.files', source)
+        self.assertIn('chosenFiles=totalFiles', source)
+        self.assertIn("el('private-files-clear').onclick", source)
+        self.assertIn("event.preventDefault();", source)
+
     def test_reject_unpaired_and_csrf(self):
         self.assertEqual(self.phone.get('/api/private/latest').status_code,401)
         self.assertEqual(self.pc.post('/api/private/create',json={'label':'PC'}).status_code,403)
