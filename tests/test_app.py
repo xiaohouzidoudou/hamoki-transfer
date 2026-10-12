@@ -5,24 +5,23 @@ import tempfile
 import time
 import unittest
 
-os.environ.setdefault('UPLOAD_SECRET', 'x' * 32)
 os.environ.setdefault('DATA_DIR', tempfile.mkdtemp(prefix='hamoki-import-'))
 
-from app import create_app
+from app import RATE, create_app
 
 
 class HamokiTest(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.TemporaryDirectory()
-        self.key = 'test-' + 'Z' * 27
-        self.app = create_app({'TESTING': True, 'DATA_DIR': self.dir.name, 'UPLOAD_SECRET': self.key, 'TOTAL_BYTES': 10000})
+        RATE.clear()
+        self.app = create_app({'TESTING': True, 'DATA_DIR': self.dir.name, 'TOTAL_BYTES': 10000})
         self.client = self.app.test_client()
 
     def tearDown(self):
         self.dir.cleanup()
 
     def send_text(self, content='https://example.net'):
-        return self.client.post('/api/send', data={'text': content, 'ttl': '1h'}, headers={'X-Upload-Key': self.key})
+        return self.client.post('/api/send', data={'text': content, 'ttl': '1h'})
 
     def test_text_and_pickup_limit(self):
         result = self.send_text()
@@ -38,7 +37,7 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(self.client.post('/api/text/' + code).status_code, 404)
 
     def test_file_upload_and_download(self):
-        result = self.client.post('/api/send', data={'file': (io.BytesIO(b'bytes here'), 'hello.txt'), 'ttl': '24h'}, headers={'X-Upload-Key': self.key})
+        result = self.client.post('/api/send', data={'file': (io.BytesIO(b'bytes here'), 'hello.txt'), 'ttl': '24h'})
         self.assertEqual(result.status_code, 201)
         code = result.json['code']
         downloaded = self.client.get('/d/' + code)
@@ -47,9 +46,16 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('attachment', downloaded.headers['Content-Disposition'])
         self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 4)
 
-    def test_denied_unauthorized_upload(self):
-        res = self.client.post('/api/send', data={'text': 'secret'})
-        self.assertEqual(res.status_code, 403)
+    def test_public_upload_without_key(self):
+        res = self.client.post('/api/send', data={'text': 'hello, public upload'})
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(len(res.json['code']), 12)
+
+    def test_public_upload_rate_limit(self):
+        for _ in range(10):
+            self.assertEqual(self.send_text('rate test').status_code, 201)
+        self.assertEqual(self.send_text('rate exceeded').status_code, 429)
+
 
     def test_expiry(self):
         code = self.send_text('temporary').json['code']
@@ -58,7 +64,7 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(self.client.get('/api/item/' + code).status_code, 404)
 
     def test_quota(self):
-        res = self.client.post('/api/send', data={'file': (io.BytesIO(b'x' * 10001), 'big.txt')}, headers={'X-Upload-Key': self.key})
+        res = self.client.post('/api/send', data={'file': (io.BytesIO(b'x' * 10001), 'big.txt')})
         self.assertEqual(res.status_code, 507)
 
 
