@@ -9,7 +9,7 @@ let selectedMode = 'single';
 let pickupUrl = '';
 let shareUrl = '';
 const HISTORY_KEY = 'hamoki-transfer-sent-v1';
-const historyTtl = { '1h': 3600, '24h': 86400, '7d': 604800 };
+const historyTtl = { '1d': 86400, '3d': 259200, '7d': 604800, '1h': 3600, '24h': 86400 };
 const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
 
 function readSentHistory() {
@@ -165,15 +165,12 @@ function formatSize(bytes) {
   if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
   return (bytes / 1073741824).toFixed(2) + ' GB';
 }
+// The three upload modes are always visible, like the approved design.
 function closePicker() {
-  $('picker-menu').hidden = true;
-  $('pick').setAttribute('aria-expanded', 'false');
+  $('picker-menu').hidden = false;
+  $('pick').setAttribute('aria-expanded', 'true');
 }
-$('pick').onclick = () => {
-  const expand = $('picker-menu').hidden;
-  $('picker-menu').hidden = !expand;
-  $('pick').setAttribute('aria-expanded', String(expand));
-};
+$('pick').onclick = () => $('file').click();
 for (const [mode, input] of [['single', 'file'], ['multiple', 'files'], ['folder', 'folder']]) {
   $('pick-' + mode).onclick = () => {
     closePicker();
