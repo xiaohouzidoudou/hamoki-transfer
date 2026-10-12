@@ -46,6 +46,50 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('attachment', downloaded.headers['Content-Disposition'])
         self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 4)
 
+    def test_combined_picture_and_text_one_code(self):
+        payload = b'\\x89PNG\\r\\n\\x1a\\nhello'
+        result = self.client.post('/api/send', data={
+            'file': (io.BytesIO(payload), 'photo.png'),
+            'text': '这张图片请一起收取',
+            'ttl': '1h',
+        })
+        self.assertEqual(result.status_code, 201)
+        code = result.json['code']
+        self.assertTrue(result.json['has_file'])
+        self.assertTrue(result.json['has_text'])
+        self.assertEqual(len(code), 12)
+        lookup = self.client.get('/api/item/' + code)
+        self.assertEqual(lookup.status_code, 200)
+        self.assertTrue(lookup.json['has_text'])
+        self.assertTrue(lookup.json['has_file'])
+        self.assertEqual(lookup.json['remaining'], 5)
+        self.assertEqual(self.client.post('/api/text/' + code).json['text'], '这张图片请一起收取')
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 5)
+        with self.client.get('/d/' + code) as downloaded:
+            self.assertEqual(downloaded.status_code, 200)
+            self.assertEqual(downloaded.data, payload)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 4)
+        self.assertEqual(self.client.post('/api/text/' + code).json['text'], '这张图片请一起收取')
+
+    def test_text_limit_still_applies_when_image_present(self):
+        result = self.client.post('/api/send', data={
+            'file': (io.BytesIO(b'picture'), 'photo.jpg'),
+            'text': '字' * 30000,
+        })
+        self.assertEqual(result.status_code, 400)
+
+    def test_legacy_file_only_and_text_only_still_compatible(self):
+        text = self.send_text('old sharing flow').json['code']
+        self.assertTrue(self.client.get('/api/item/' + text).json['has_text'])
+        self.assertFalse(self.client.get('/api/item/' + text).json['has_file'])
+        self.assertEqual(self.client.post('/api/text/' + text).json['text'], 'old sharing flow')
+        file_result = self.client.post('/api/send', data={'file': (io.BytesIO(b'old file'), 'legacy.txt')})
+        filecode = file_result.json['code']
+        self.assertFalse(self.client.get('/api/item/' + filecode).json['has_text'])
+        self.assertTrue(self.client.get('/api/item/' + filecode).json['has_file'])
+        with self.client.get('/d/' + filecode) as response:
+            self.assertEqual(response.data, b'old file')
+
     def test_public_upload_without_key(self):
         res = self.client.post('/api/send', data={'text': 'hello, public upload'})
         self.assertEqual(res.status_code, 201)
