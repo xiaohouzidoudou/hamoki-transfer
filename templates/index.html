@@ -42,6 +42,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
             取文件
           </button>
+          <button id="tab-history" type="button" role="tab" aria-controls="pane-history" aria-selected="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            历史记录
+          </button>
         </div>
 
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
@@ -60,7 +64,7 @@
             </div>
           </div>
 
-          <label class="text-label" for="text">或者传一段文字</label>
+          <label class="text-label" for="text">附带文字（可与图片、文件一起传）</label>
           <textarea id="text" rows="2" maxlength="65536" placeholder="粘贴文字、链接或备忘…"></textarea>
 
           <div class="row">
@@ -74,7 +78,7 @@
           </div>
 
           <button class="primary full" type="button" id="upload">生成取件码 <span aria-hidden="true">→</span></button>
-          <p class="hint" id="send-tip">仅持私密链接可上传 · 取件无需登录</p>
+          <p class="hint" id="send-tip">无需登录直接上传 · 文件到期后自动删除</p>
         </section>
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
@@ -87,10 +91,18 @@
               <span class="file-icon" aria-hidden="true">📄</span>
               <div class="file-desc"><strong id="found-name"></strong><small id="found-details"></small></div>
             </div>
-            <button id="claim" type="button" class="primary full">领取文件</button>
+            <button id="claim" type="button" class="primary full">领取文字</button>
+            <button id="download-file" type="button" class="primary full" hidden>下载文件</button>
             <pre id="received-text" hidden></pre>
             <button id="copy-text" class="secondary" type="button" hidden>复制文字</button>
           </div>
+        </section>
+
+        <section id="pane-history" class="pane history-pane" role="tabpanel" aria-labelledby="tab-history" hidden>
+          <h2>最近传送</h2>
+          <p class="muted">同一浏览器会记住你上传的取件码，刷新或切换页面也能找回。文件到期后不可领取。</p>
+          <div id="history-list" class="history-list" aria-live="polite"></div>
+          <p class="hint">只保存在当前浏览器；更换设备或清除浏览器数据后不会同步。</p>
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
