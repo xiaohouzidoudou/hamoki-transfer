@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 230" fill="none">
+<defs>
+<linearGradient id="leafA" x1="30" y1="200" x2="320" y2="24" gradientUnits="userSpaceOnUse"><stop stop-color="#133F27"/><stop offset="1" stop-color="#3A8A45"/></linearGradient>
+<linearGradient id="leafB" x1="64" y1="208" x2="290" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#225735"/><stop offset="1" stop-color="#81CB50"/></linearGradient>
+</defs>
+<path d="M0 230c26-32 49-39 78-33 22-61 56-76 104-65 19-48 60-71 114-57 19-25 39-39 64-41v196H0Z" fill="#0A3426"/>
+<path d="M119 223c14-75-2-138-71-176C18 132 35 196 119 223Z" fill="url(#leafA)"/>
+<path d="M126 226C87 137 117 71 179 27c37 89 7 160-53 199Z" fill="url(#leafB)"/>
+<path d="M171 218c-5-88 49-149 132-167 3 82-42 150-132 167Z" fill="url(#leafA)"/>
+<path d="M210 228c36-62 86-88 150-78-13 67-61 96-150 78Z" fill="url(#leafB)"/>
+<path d="M32 231C35 182 20 154 0 132v98h32Z" fill="#22573B"/>
+<path d="M86 229C55 203 24 199 0 202v28h86Z" fill="#3C8850"/>
+<path d="M142 221c-17-67-13-109 0-148M175 214c28-72 63-109 104-134M226 220c50-31 83-40 121-45M109 210C81 146 64 108 51 72" stroke="#B8EF7E" stroke-width="3" stroke-opacity=".25" stroke-linecap="round"/>
+<path d="M10 215c27-46 59-60 96-47-17 42-49 60-96 47Z" fill="#4C9F54" fill-opacity=".67"/>
+<path d="M251 229c26-49 56-67 93-63-9 46-36 69-93 63Z" fill="#67AF5C" fill-opacity=".42"/>
+</svg>
