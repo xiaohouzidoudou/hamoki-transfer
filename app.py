@@ -30,7 +30,14 @@ class InsufficientStorage(HTTPException):
 
 
 def make_code():
-    return ''.join(secrets.choice(ALPHABET) for _ in range(12))
+    # Four decimal digits, including leading zeros (0000-9999).
+    return f'{secrets.randbelow(10000):04d}'
+
+
+def valid_code(code):
+    return (len(code) == 4 and code.isascii() and code.isdecimal()) or (
+        len(code) == 12 and all(ch in ALPHABET for ch in code)
+    )
 
 
 def create_app(test_config=None):
@@ -176,8 +183,12 @@ def create_app(test_config=None):
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
                 if kind == 'file' and used + size > app.config['TOTAL_BYTES']:
                     raise InsufficientStorage()
-                while con.execute('SELECT 1 FROM shares WHERE code=?', (code,)).fetchone():
+                for _ in range(150):
+                    if not con.execute('SELECT 1 FROM shares WHERE code=?', (code,)).fetchone():
+                        break
                     code = make_code()
+                else:
+                    abort(503, description='当前可用取件码不足，请稍后再试')
                 if pending:
                     os.replace(pending, files / code)
                 con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)', (code, kind, name, size, body, now + TTL[ttl], 5, now))
@@ -190,7 +201,7 @@ def create_app(test_config=None):
         ), 201
 
     def lookup_share(code):
-        if len(code) != 12 or any(c not in ALPHABET for c in code):
+        if not valid_code(code):
             abort(404, description='取件码不存在')
         with db() as con:
             row = con.execute('SELECT * FROM shares WHERE code=? AND expires > ? AND remaining > 0', (code, int(time.time()))).fetchone()
@@ -198,9 +209,17 @@ def create_app(test_config=None):
             abort(404, description='取件码不存在或已过期')
         return row
 
+    def limit_short_code_access(code):
+        if len(code) == 4:
+            # Short numeric codes can be guessed: throttle ALL lookup and pickup
+            # paths together per client IP, including direct download URLs.
+            limit('short-code-access-minute', 12)
+            limit('short-code-access-hour', 60, 3600)
+
     @app.get('/api/item/<code>')
     def lookup(code):
         limit('lookup', 40)
+        limit_short_code_access(code)
         row = lookup_share(code.upper())
         return jsonify(
             code=row['code'], name=row['name'], kind=row['kind'],
@@ -231,12 +250,14 @@ def create_app(test_config=None):
     @app.post('/api/text/<code>')
     def get_text(code):
         limit('pickup', 30)
+        limit_short_code_access(code)
         row = consume(code.upper(), 'text')
         return jsonify(text=row['body'])
 
     @app.get('/d/<code>')
     def download(code):
         limit('pickup', 30)
+        limit_short_code_access(code)
         row = consume(code.upper(), 'file')
         path = files / row['code']
         if not path.is_file():
@@ -245,6 +266,7 @@ def create_app(test_config=None):
 
     @app.get('/api/qr/<code>')
     def qr(code):
+        limit_short_code_access(code)
         lookup_share(code.upper())
         base = app.config['PUBLIC_URL'].rstrip('/') or request.url_root.rstrip('/')
         url = base + '/?code=' + quote(code.upper(), safe='')
