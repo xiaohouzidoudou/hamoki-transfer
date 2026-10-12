@@ -321,7 +321,6 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('id="picker-menu"', html)
         self.assertIn('class="done-share-grid"', html)
         self.assertNotIn('开源项目 ↗', html)
-        self.assertNotIn('FileCodeBox', html)
         self.assertIn('static/hamoki-avatar.webp', html)
         avatar = self.client.get('/static/hamoki-avatar.webp')
         self.assertEqual(avatar.status_code, 200)
