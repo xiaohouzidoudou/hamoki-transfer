@@ -10,7 +10,7 @@
 </head>
 <body class="public-share-page">
 <main>
-  <h1>🐵 好奇猴快传</h1>
+  <h1 class="page-brand">🐵 好奇猴快传</h1>
   {% if has_file %}
   <div class="download-state" role="status" aria-live="polite">
     <span class="loading-ring" aria-hidden="true"></span>
@@ -23,11 +23,11 @@
   <pre>{{ text }}</pre>
   {% endif %}
   <a id="manual-download" class="download" href="?download=1">没有弹出下载？点这里手动下载</a>
-  <small>首次进入会自动尝试下载。文件过期或领取次数用尽后无法再次下载。</small>
+  <small>首次进入会自动尝试下载。文件过期后无法再次下载，<span class="danger-text">最多领取 10 次</span>。</small>
   {% else %}
   <h2>收到一段文字</h2>
   <pre>{{ text }}</pre>
-  <small>文字已显示在上方，无需再输入取件码。</small>
+  <small>文字已显示在上方，无需再输入取件码。<span class="danger-text">最多领取 10 次</span>。</small>
   {% endif %}
 </main>
 </body>
