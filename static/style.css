@@ -233,3 +233,24 @@ footer{max-width:520px;margin:20px auto 16px}
 }
 html[data-theme="dark"] .file-pick{border-color:#495162;background:var(--field);color:var(--ink)}
 html[data-theme="dark"] .file-pick:hover{background:var(--blue-wash);border-color:var(--blue)}
+
+
+/* 最近发送历史：仅保留本浏览器中的非秘密取件元数据。 */
+.tabs button{width:33.333%;gap:6px;padding:0 4px}
+.tabs button svg{flex-shrink:0}
+.history-pane h2{font-size:21px;margin:3px 0 9px;letter-spacing:-.5px}
+.history-list{display:flex;flex-direction:column;gap:10px;margin-top:16px;max-height:450px;overflow:auto}
+.history-item{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:12px;background:var(--soft);border-radius:13px}
+.history-info{min-width:0}
+.history-info strong{display:block;font-size:13px;font-weight:650;overflow-wrap:anywhere}
+.history-info small{display:block;color:var(--muted);font-size:11px;margin-top:6px;overflow-wrap:anywhere}
+.history-open{min-height:33px;flex-shrink:0;padding:7px 13px;font-size:12px}
+.history-open:disabled{opacity:.5;cursor:not-allowed}
+.history-empty{padding:19px 9px;font-size:13px;text-align:center;color:var(--muted)}
+#claim[hidden],#download-file[hidden],#copy-text[hidden]{display:none!important}
+#download-file{overflow-wrap:anywhere;white-space:normal;text-align:center}
+@media(max-width:520px){
+  .tabs button{gap:4px;font-size:12px;padding:0 2px}
+  .tabs button svg{width:15px;height:15px}
+  .history-item{padding:10px}
+}
