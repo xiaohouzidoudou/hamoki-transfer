@@ -122,7 +122,7 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(list((Path(self.dir.name) / 'files').iterdir()), [])
 
     def test_image_preview_does_not_use_claim(self):
-        png = b'\\x89PNG\\r\\n\\x1a\\nsmall-image-fixture'
+        png = bytes([137, 80, 78, 71, 13, 10, 26, 10]) + b'small-image-fixture'
         response = self.client.post('/api/send', data={
             'file': (io.BytesIO(png), 'preview.png'),
         })
