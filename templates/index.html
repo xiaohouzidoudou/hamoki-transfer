@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="description" content="Simple temporary file transfer in your browser">
+  <title>Hamoki 快传</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+<div class="shell">
+  <header><a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> Hamoki <b>Transfer</b></a><span class="label">私人网页快传</span></header>
+  <div class="hero"><h1>上传文件，扫码即取</h1><p>只要浏览器，电脑和手机都能传。不用安装，不用注册。</p></div>
+  <main class="card">
+    <div class="tabs" role="tablist">
+      <button id="tab-send" class="active" type="button">寄文件</button>
+      <button id="tab-get" type="button">取文件</button>
+    </div>
+    <section id="pane-send" class="pane">
+      <div id="drop" class="drop"><div class="big-icon">&#8593;</div><h2>把文件拖到这里</h2><p>或者点击选择文件</p><button id="pick" class="secondary" type="button">选择文件</button><input type="file" id="file" hidden><div id="file-info" class="file-info"></div></div>
+      <div class="separator">或者传一段文字</div>
+      <textarea id="text" rows="3" maxlength="65536" placeholder="粘贴网址、文字或临时备忘…"></textarea>
+      <label class="row" for="ttl"><span>保存时间</span><select id="ttl"><option value="1h">1 小时</option><option value="24h" selected>24 小时</option><option value="7d">7 天</option></select></label>
+      <button class="primary full" type="button" id="upload">立即传送 &#8594;</button>
+      <p class="muted small" id="send-tip">上传使用私密链接，取件不需登录。</p>
+    </section>
+    <section id="pane-get" class="pane" hidden>
+      <p class="muted">输入取件码，立即查看临时文件。</p>
+      <label class="fieldlabel" for="code-input">取件码</label>
+      <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="ABCD2345EFGH">
+      <button class="primary full" id="lookup" type="button">查找文件 &#8594;</button>
+      <div id="found" class="found" hidden><div class="file-line"><span class="file-icon">&#128196;</span><div><strong id="found-name"></strong><small id="found-details"></small></div></div><button id="claim" type="button" class="primary full">下载</button><pre id="received-text" hidden></pre><button id="copy-text" class="secondary" type="button" hidden>复制文字</button></div>
+    </section>
+    <section id="pane-done" class="pane done" hidden><div class="check">&#10003;</div><h2>上传成功！</h2><p class="muted">手机扫码或输入取件码即可领取。</p><div id="done-code" class="code"></div><img id="done-qr" alt="取件二维码" width="196" height="196"><div class="actions"><button id="copy-link" class="primary" type="button">复制取件链接</button><button id="again" class="secondary" type="button">继续传送</button></div><p class="muted small">到期自动清理，每份最多取件 5 次。</p></section>
+    <p id="message" role="status" aria-live="polite" class="message"></p>
+  </main>
+  <footer>Hamoki 快传 &#183; 开源 &#183; 不用 Telegram，不需代理</footer>
+</div>
+</body>
+</html>
