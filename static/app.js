@@ -151,34 +151,57 @@ $('send-tip').textContent = '✦ 默认 3 天后自动销毁 · 无需登录';
 function flash(message) {
   $('message').textContent = message || '';
 }
+let activePane = 'send';
 function pane(name) {
+  const tabNames = ['send', 'get', 'history'];
+  const nextIndex = tabNames.indexOf(name);
+  const currentIndex = tabNames.indexOf(activePane);
+  if (nextIndex >= 0) {
+    document.querySelector('.tabs').style.setProperty('--tab-index', String(nextIndex));
+    document.querySelector('.workspace').dataset.slideDirection =
+      nextIndex < currentIndex ? 'backward' : 'forward';
+  }
   document.body.classList.toggle('is-done', name === 'done');
   ['send', 'get', 'history', 'done'].forEach(item => {
     $('pane-' + item).hidden = item !== name;
   });
-  for (const tab of ['send', 'get', 'history']) {
+  for (const tab of tabNames) {
     $('tab-' + tab).classList.toggle('active', name === tab);
     $('tab-' + tab).setAttribute('aria-selected', String(name === tab));
   }
+  activePane = name;
   if (name === 'history') renderHistory();
   flash('');
 }
+// Slide the highlight, rather than abruptly recoloring each expiry option.
+const ttlOptions = document.querySelector('.ttl-options');
+const ttlInputs = [...document.querySelectorAll('input[name="ttl"]')];
+function syncTtlSlider() {
+  const index = Math.max(0, ttlInputs.findIndex(input => input.checked));
+  ttlOptions.style.setProperty('--ttl-index', String(index));
+}
+ttlInputs.forEach(input => input.addEventListener('change', syncTtlSlider));
+syncTtlSlider();
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + ' 字节';
   if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
   if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
   return (bytes / 1073741824).toFixed(2) + ' GB';
 }
-// The three upload modes are always visible, like the approved design.
+// Keep the popover rendered so opening and closing can animate smoothly.
+// Inert prevents keyboard focus in visually closed menu items.
 function setPickerOpen(open) {
-  $('picker-menu').hidden = !open;
+  const menu = $('picker-menu');
+  menu.dataset.state = open ? 'open' : 'closed';
+  menu.inert = !open;
+  menu.setAttribute('aria-hidden', String(!open));
   $('pick').setAttribute('aria-expanded', String(open));
   $('drop').classList.toggle('picker-expanded', open);
 }
 function closePicker() {
   setPickerOpen(false);
 }
-$('pick').onclick = () => setPickerOpen($('picker-menu').hidden);
+$('pick').onclick = () => setPickerOpen($('picker-menu').dataset.state !== 'open');
 for (const [mode, input] of [['single', 'file'], ['multiple', 'files'], ['folder', 'folder']]) {
   $('pick-' + mode).onclick = () => {
     closePicker();
