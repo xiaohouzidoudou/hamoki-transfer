@@ -13,7 +13,7 @@ function readSentHistory() {
   try {
     const rows = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     return Array.isArray(rows) ? rows.filter(row =>
-      row && typeof row.code === 'string' && /^(?:[0-9]{4}|[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12})$/.test(row.code)
+      row && typeof row.code === 'string' && /^(?:[0-9A-HJ-NP-Z]{4}|[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12})$/.test(row.code)
     ).slice(0, 60) : [];
   } catch { return []; }
 }
@@ -28,6 +28,18 @@ function formatWhen(seconds) {
 }
 function displayDone(item) {
   pickupUrl = location.origin + appRoot + '?code=' + encodeURIComponent(item.code);
+  // The long random public link does not expose the easy-to-type pickup code.
+  const publicPath = typeof item.public_path === 'string' && /^\/f\/[A-Za-z0-9_-]{16,64}$/.test(item.public_path)
+    ? item.public_path.substring(1)
+    : (item.has_file && !item.has_text ? 'd/' + encodeURIComponent(item.code) : '?code=' + encodeURIComponent(item.code));
+  const publicUrl = location.origin + appRoot + publicPath;
+  $('public-link-url').textContent = publicUrl;
+  $('public-link-url').href = publicUrl;
+  $('copy-public-link').dataset.url = publicUrl;
+  $('copy-public-link').textContent = '复制';
+  $('public-link-tip').textContent = item.public_path
+    ? '发给别人就能直接领取，无需输入取件码。'
+    : '旧记录使用原来的领取链接，新上传会生成直接访问的公共链接。';
   $('done-code').textContent = item.code;
   $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(item.code));
   $('copy-link').textContent = '复制领取链接';
@@ -187,7 +199,7 @@ $('upload').onclick = async () => {
     const response = await sendForm(form);
     rememberSent({
       code: response.code, name: response.name, has_file: response.has_file,
-      has_text: response.has_text, created: response.created,
+      has_text: response.has_text, created: response.created, public_path: response.public_path,
       expires: response.expires || response.created + historyTtl[response.ttl]
     });
     displayDone(response);
@@ -214,6 +226,7 @@ async function copyText(value, button, successLabel) {
 }
 $('copy-code').onclick = () => copyText($('done-code').textContent, null, '');
 $('copy-link').onclick = () => copyText(pickupUrl, $('copy-link'), '已复制');
+$('copy-public-link').onclick = () => copyText($('copy-public-link').dataset.url, $('copy-public-link'), '已复制');
 $('again').onclick = () => {
   $('file').value = '';
   $('text').value = '';
