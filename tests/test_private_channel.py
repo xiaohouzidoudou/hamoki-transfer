@@ -2,11 +2,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from app import create_app
+from app import create_app, RATE, RATE_LOCK
 
 
 class PairedTransferTests(unittest.TestCase):
     def setUp(self):
+        with RATE_LOCK:
+            RATE.clear()
         self.tmp = tempfile.TemporaryDirectory()
         self.app = create_app({'TESTING': True, 'DATA_DIR': self.tmp.name})
         self.pc = self.app.test_client()
