@@ -2,7 +2,7 @@ FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py private_channel.py ./
+COPY app.py private_channel.py audit.py ./
 COPY static ./static
 COPY templates ./templates
 RUN mkdir -p /data/files && useradd --uid 10001 --home-dir /nonexistent --no-create-home hamoki && chown -R hamoki:hamoki /data

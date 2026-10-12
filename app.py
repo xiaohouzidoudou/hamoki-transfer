@@ -22,6 +22,7 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
 from private_channel import setup_private
+from audit import setup_audit
 
 # Minimal container images may lack system MIME mappings for WebP avatars.
 mimetypes.add_type('image/webp', '.webp')
@@ -256,6 +257,7 @@ def create_app(test_config=None):
         return err
 
     setup_private(app, db, files, LOCK, limit)
+    setup_audit(app, db, root, limit)
 
     @app.route('/')
     def home():

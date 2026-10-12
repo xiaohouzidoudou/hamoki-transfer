@@ -1,0 +1,34 @@
+/* Minimal audit screen, matching the existing Hamoki theme. */
+.audit-main{max-width:900px;margin:28px auto 60px}
+.audit-card{padding:25px;background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
+.audit-heading h1{font-size:24px;margin:0 0 6px;color:var(--ink)}
+.audit-heading p{font-size:13px;line-height:1.8;color:var(--muted);margin:0 0 23px}
+.audit-back{font-size:13px;color:var(--muted);text-decoration:none}
+.audit-login{padding:20px;border:1px solid var(--line);border-radius:15px;background:var(--soft)}
+.audit-login label{display:block;font-size:14px;margin-bottom:9px;font-weight:650}
+.audit-login-row{display:flex;gap:9px}
+.audit-login-row input{flex:1;min-width:0;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--ink)}
+.audit-login-row button{min-width:100px}
+.audit-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0}
+.audit-controls label{color:var(--muted);font-size:13px}
+.audit-controls input{padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--field);color:var(--ink);max-width:160px}
+.audit-link-button{margin-left:auto;border:0;background:none;text-decoration:underline;color:var(--muted);font-size:13px}
+.audit-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:15px 0 25px}
+.audit-overview>div{padding:13px;background:var(--soft);border-radius:13px;border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.audit-overview small{font-size:12px;color:var(--muted)}
+.audit-overview strong{font-size:24px;color:var(--ink)}
+.audit-section-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.audit-section-head h2{font-size:17px;margin:0 0 10px}
+.audit-section-head small{color:var(--muted)}
+.audit-scroll{overflow:auto;border:1px solid var(--line);border-radius:13px}
+.audit-table{width:100%;border-collapse:collapse;min-width:560px;font-size:12px}
+.audit-table th,.audit-table td{padding:12px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+.audit-table th{color:var(--muted);font-weight:600;background:var(--soft)}
+.audit-table tr:last-child td{border-bottom:0}
+.audit-table td{color:var(--ink)}
+.audit-table td small{display:block;color:var(--muted);margin-top:2px}
+.audit-status-good{color:#168e44}.audit-status-warn{color:#c45150;font-weight:650}
+.audit-note{color:var(--muted);font-size:12px;line-height:1.8}
+.audit-page-controls{text-align:center;margin:13px 0}
+#audit-message{min-height:1em;color:var(--muted);font-size:13px}
+@media(max-width:580px){.shell{padding:0 13px}.audit-card{padding:17px}.audit-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.audit-login-row{flex-wrap:wrap}.audit-login-row input{flex-basis:100%}.audit-login-row button{width:100%}}
