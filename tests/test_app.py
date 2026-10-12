@@ -356,6 +356,33 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('id="preview-dialog"', html)
         self.assertNotIn('4 位英数字取件码（兼容旧码）', html)
 
+    def test_qr_follows_active_domain_without_breaking_preview_prefix(self):
+        import qrcode
+        from unittest.mock import patch
+
+        shared = self.send_text('domain-safe QR')
+        code = shared.json['code']
+        original = self.app.config['PUBLIC_URL']
+        self.app.config['PUBLIC_URL'] = 'https://preview.example.test/project'
+        try:
+            with patch('app.qrcode.make', wraps=qrcode.make) as mk:
+                response = self.client.get('/api/qr/' + code, headers={
+                    'Host': 'preview.example.test', 'X-Forwarded-Proto': 'https'
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(mk.call_args.args[0],
+                                 'https://preview.example.test/project/?code=' + code)
+
+            with patch('app.qrcode.make', wraps=qrcode.make) as mk:
+                response = self.client.get('/api/qr/' + code, headers={
+                    'Host': 'new.example.test', 'X-Forwarded-Proto': 'https'
+                })
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(mk.call_args.args[0],
+                                 'https://new.example.test/?code=' + code)
+        finally:
+            self.app.config['PUBLIC_URL'] = original
+
     def test_unified_svg_icons_and_offline_assets(self):
         import xml.etree.ElementTree as ElementTree
         sprite = self.client.get('/static/icons.svg')
