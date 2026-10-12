@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="static/icons.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
+  <script src="static/private.js" defer></script>
+  <link rel="stylesheet" href="static/private.css">
 </head>
 <body>
 <div class="page-glow" aria-hidden="true"></div>
@@ -40,7 +42,8 @@
     <div class="workspace">
       <div class="card">
         <div class="tabs" data-index="0" role="tablist" aria-label="文件传递">
-          <button id="tab-send" class="active" type="button" role="tab" aria-controls="pane-send" aria-selected="true"><svg class="ui-icon nav-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#upload"></use></svg>
+          <button id="tab-private" class="active" type="button">私人快传</button>
+          <button id="tab-send" type="button" role="tab" aria-controls="pane-send" aria-selected="true"><svg class="ui-icon nav-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#upload"></use></svg>
             寄文件
           </button>
           <button id="tab-get" type="button" role="tab" aria-controls="pane-get" aria-selected="false"><svg class="ui-icon nav-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#download"></use></svg>
@@ -51,6 +54,31 @@
           </button>
         </div>
 
+        <section id="private-workspace" class="private-workspace">
+<div id="private-onboard" class="private-panel" hidden>
+  <h2>开启私人快传</h2><p class="private-muted">只需配对一次，电脑与手机就能长期互传。</p>
+  <div class="private-onboard-actions"><button id="private-create" class="primary" type="button">创建我的配对空间</button></div>
+  <div class="private-join"><label for="private-invite-input">已有配对码？</label><input id="private-invite-input" placeholder="HK-XXXXXX-XXXXXX-XXXXXX-XXXXXX" autocomplete="off"><button id="private-join" class="secondary" type="button">加入已有空间</button></div>
+</div>
+<div id="private-paired" hidden>
+  <div class="private-status"><span class="private-connected">● 已配对 · 双向互传</span><button id="private-settings-toggle" type="button" class="private-text-button">设备管理</button></div>
+  <section class="private-panel"><div class="private-section-heading"><h2>最新内容</h2><small id="private-source">自动接收</small></div>
+    <div id="private-inbox" class="private-inbox">还没有内容，在另一台设备发送后会自动显示。</div>
+    <div id="private-file-row" class="private-file-row" hidden><span id="private-filename"></span><a id="private-download" class="secondary" href="api/private/file">下载文件</a></div>
+    <button id="private-copy" class="primary full" type="button" hidden>复制内容</button>
+  </section>
+  <section class="private-panel"><div class="private-section-heading"><h2>发送新内容</h2><small>发送后覆盖上一条</small></div>
+    <textarea id="private-text" rows="3" placeholder="在这里粘贴文字，也可以选择图片或文件…"></textarea>
+    <div class="private-send-tools"><label for="private-files" class="secondary private-file-label"><svg class="ui-icon" aria-hidden="true"><use href="static/icons.svg#file"></use></svg> 选择文件</label><input type="file" id="private-files" multiple hidden><button id="private-send" class="primary" type="button">发送</button></div>
+    <p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
+  </section>
+  <div id="private-settings" class="private-panel" hidden><div class="private-section-heading"><h2>绑定设备</h2><button class="private-text-button" id="private-settings-close" type="button">收起</button></div>
+    <p class="private-muted">绑定不会自动过期；清理浏览器数据后，需要用原配对码再次绑定。</p>
+    <div id="private-device-list"></div><button id="private-leave" class="secondary" type="button">解除本机绑定</button>
+  </div>
+</div>
+<p id="private-message" role="status" aria-live="polite" class="private-message"></p>
+</section>
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
           <div class="summer-intro"><div><span class="intro-kicker">和好奇猴一起出发</span><h1>轻松传文件<br><em>分享更简单</em></h1><p>大文件也能轻松传，安全高效分享给好友</p></div><img src="static/hamoki-avatar.webp" alt="好奇猴探险家" width="128" height="128"></div>
           <div id="drop" class="file-select">
