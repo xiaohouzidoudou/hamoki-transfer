@@ -277,3 +277,26 @@ html[data-theme="dark"] .expiry-countdown.expired strong{color:#ff6257}
 .public-link-copy{border:0;border-radius:8px;background:var(--panel);color:var(--ink);font-size:12px;font-weight:650;padding:8px 10px;flex-shrink:0;cursor:pointer}
 .public-link-panel+.hint{margin-top:7px;margin-bottom:14px;text-align:left}
 @media(max-width:520px){.public-link-panel{gap:6px;padding:9px 8px}.public-link-label{font-size:10px}.public-link-copy{padding:7px 8px}}
+
+/* 紧凑的传送结果：取件码与分享功能优先出现在首屏。 */
+.done{padding-top:14px}
+.done-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 12px;margin-bottom:11px;text-align:left}
+.done-head .expiry-countdown{margin:0;flex-shrink:0}
+.done-head .done-title{margin:0;font-size:clamp(14px,3.2vw,17px);line-height:1.4;letter-spacing:-.3px;font-weight:720;color:var(--ink)}
+.done .code-wrap{margin:0 0 10px;padding:10px 11px}
+.done .public-link-panel{margin-top:0;padding:9px 11px}
+.done .public-link-panel+.hint{margin-top:5px;margin-bottom:9px}
+.done .qr-panel{width:202px;margin:0 auto 13px;padding:10px 9px 8px}
+.done .qr-panel img{width:176px;height:176px}
+.done .qr-panel span{margin-top:5px}
+.done .actions{gap:8px}
+.done .actions .primary,.done .actions .secondary{min-height:40px;padding:8px 12px}
+.done>.hint:last-of-type{margin-top:8px}
+@media(max-width:520px){
+  .done{padding-top:11px}
+  .done-head{gap:7px 10px;margin-bottom:9px}
+  .done-head .done-title{font-size:14px}
+  .done .qr-panel{width:186px;margin-bottom:10px}
+  .done .qr-panel img{width:162px;height:162px}
+  .done .code-wrap{padding:9px}
+}
