@@ -41,6 +41,26 @@ class HamokiTest(unittest.TestCase):
         RATE.clear()
         self.assertEqual(self.client.post('/api/text/' + code).status_code, 404)
 
+    def test_file_size_boundary_and_error(self):
+        # One MiB test limit exercises the same logic without allocating 5 GiB.
+        app = create_app({
+            'TESTING': True,
+            'DATA_DIR': self.dir.name,
+            'MAX_UPLOAD_MB': 1,
+            'TOTAL_BYTES': 4 * 1024 * 1024,
+        })
+        self.assertEqual(self.app.config['MAX_FILE_BYTES'], 5 * 1024 ** 3)
+        self.assertGreater(self.app.config['MAX_CONTENT_LENGTH'], 5 * 1024 ** 3)
+        self.assertEqual(app.config['MAX_FILE_BYTES'], 1024 ** 2)
+        client = app.test_client()
+        oversized = client.post('/api/send', data={
+            'file': (io.BytesIO(b'x' * (1024 ** 2 + 1)), 'too-large.dat'),
+        })
+        self.assertEqual(oversized.status_code, 413)
+        self.assertIn('不能超过 5 GB', oversized.json['error'])
+        self.assertEqual(list((__import__('pathlib').Path(self.dir.name) / 'files').glob('*.upload')), [])
+        self.assertEqual(list((__import__('pathlib').Path(self.dir.name) / 'files').iterdir()), [])
+
     def test_file_upload_and_download(self):
         result = self.client.post('/api/send', data={'file': (io.BytesIO(b'bytes here'), 'hello.txt'), 'ttl': '24h'})
         self.assertEqual(result.status_code, 201)
@@ -152,6 +172,9 @@ class HamokiTest(unittest.TestCase):
             self.assertIn(b'public_share.js', landing.data)
             self.assertIn('class="page-brand"'.encode('utf-8'), landing.data)
             self.assertIn('最多领取 10 次'.encode('utf-8'), landing.data)
+            self.assertIn(b'data-expiry-countdown', landing.data)
+            self.assertIn(b'countdown.js', landing.data)
+            self.assertIn(('data-expires="' + str(response.json['expires']) + '"').encode(), landing.data)
         self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 10)
         for i in range(10):
             with self.client.get(direct_path + '?download=1') as result:
@@ -190,6 +213,9 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(page.status_code, 200)
         html = page.data.decode('utf8')
         self.assertLess(html.index('id="public-link-url"'), html.index('id="done-qr"'))
+        self.assertIn('data-expiry-countdown', html)
+        self.assertIn('static/countdown.js', html)
+        self.assertIn('单个文件最大 5 GB', html)
         self.assertIn('最多领取 10 次', html)
         self.assertIn('class="danger-text"', html)
 
