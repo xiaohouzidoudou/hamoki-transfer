@@ -87,7 +87,7 @@ def create_app(test_config=None):
             size INTEGER NOT NULL,
             body TEXT,
             expires INTEGER NOT NULL,
-            remaining INTEGER NOT NULL DEFAULT 5,
+            remaining INTEGER NOT NULL DEFAULT 10,
             created INTEGER NOT NULL
         )''')
         con.execute('CREATE INDEX IF NOT EXISTS idx_shares_expires ON shares(expires)')
@@ -208,7 +208,7 @@ def create_app(test_config=None):
                     abort(503, description='当前可用取件码不足，请稍后再试')
                 if pending:
                     os.replace(pending, files / code)
-                con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)', (code, kind, name, size, body, now + TTL[ttl], 5, now))
+                con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)', (code, kind, name, size, body, now + TTL[ttl], 10, now))
                 token = secrets.token_urlsafe(15)
                 for _ in range(5):
                     if not con.execute('SELECT 1 FROM public_links WHERE token=?', (token,)).fetchone():
@@ -268,7 +268,7 @@ def create_app(test_config=None):
             if row is None:
                 abort(404, description='取件码不存在或已过期')
             # For a combined share, only downloading the file counts toward
-            # its five downloads; revealing the accompanying text does not.
+            # its ten downloads; revealing the accompanying text does not.
             if expected_kind != 'text' or row['kind'] == 'text':
                 con.execute('UPDATE shares SET remaining=remaining-1 WHERE code=?', (code,))
             return row
@@ -305,7 +305,7 @@ def create_app(test_config=None):
         if row is None:
             abort(404, description='分享链接不存在或已经过期')
         if row['kind'] == 'text':
-            # Text-only links still use one of the five available text pickups.
+            # Text-only links still use one of the ten available text pickups.
             item = consume(row['code'], 'text')
             return render_template('public_share.html', has_file=False,
                                    name=row['name'], text=item['body'])
