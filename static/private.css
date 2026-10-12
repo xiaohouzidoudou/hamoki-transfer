@@ -50,3 +50,16 @@
 .tabs:has(#tab-private) button svg{display:none}
 .tabs:has(#tab-private)::before{top:4px;bottom:4px;left:4px;width:calc((100% - 17px) / 4)}
 }
+
+.private-file-selection{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--soft)}
+.private-file-selection-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:5px;font-size:13px}
+.private-selected-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.private-selected-item:last-child{border-bottom:0}
+.private-selected-item span{min-width:0;overflow-wrap:anywhere;font-size:12px}
+.private-remove,.private-danger{border:1px solid rgba(226,95,95,.30);background:rgba(237,105,105,.10);color:#ca4d58;border-radius:9px;padding:8px 12px;font-size:12px;cursor:pointer}
+.private-danger:hover,.private-remove:hover{background:rgba(237,105,105,.19)}
+html[data-theme="dark"] .private-remove,html[data-theme="dark"] .private-danger{color:#ff9faa;background:rgba(237,105,105,.15);border-color:rgba(237,105,105,.35)}
+.private-device-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.private-device-actions .secondary{font-size:12px;padding:8px 12px;min-height:0}
+#private-leave{background:rgba(237,105,105,.10);border:1px solid rgba(226,95,95,.30);color:#ca4d58}
+@media(max-width:520px){.private-device{gap:8px}.private-device-actions{gap:5px}.private-device-actions .secondary,.private-danger{padding:7px 9px}}
