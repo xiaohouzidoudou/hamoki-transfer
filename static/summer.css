@@ -410,3 +410,40 @@ html[data-theme="light"] .done #copy-code::after{color:#073b20!important;font-we
  .receive-hero img{width:70px;height:70px;flex-basis:70px}
  .receive-hero .receive-intro-copy h2{font-size:18px}
 }
+
+/* Compact file-mode popover: collapsed by default, same chevron in header and rows. */
+.file-select .picker-menu[hidden]{display:none!important}
+.file-select.picker-expanded{z-index:45}
+.card:has(.file-select.picker-expanded){overflow:visible}
+.file-select .picker-menu:not([hidden]){
+ position:absolute;z-index:70;left:12px;right:12px;top:calc(100% - 1px);
+ display:grid;gap:7px;padding:9px;width:auto;min-width:0;
+ border:1px solid var(--line);border-radius:16px;
+ background:var(--panel);
+ box-shadow:0 15px 40px rgba(0,55,23,.22);
+ backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.file-select #pick{
+ width:100%;min-height:53px;padding:3px 4px!important;
+ display:flex;align-items:center;gap:12px;
+}
+.file-select .pick-chevron,.file-select .picker-menu .menu-chevron{
+ flex:0 0 20px;width:20px;height:20px;display:block;
+ color:var(--blue);stroke:currentColor;stroke-width:2.6;
+ fill:none;stroke-linecap:round;stroke-linejoin:round;
+ transition:transform .17s ease;
+}
+.file-select .pick-chevron{margin-left:auto}
+.file-select.picker-expanded .pick-chevron{transform:rotate(90deg)}
+.file-select .picker-menu .menu-chevron{margin-left:auto}
+.file-select .picker-menu button{min-height:59px}
+html[data-theme="dark"] .file-select .picker-menu:not([hidden]){
+ background:rgba(8,37,28,.98);
+ border:1px solid rgba(134,232,119,.4);
+ box-shadow:0 16px 38px rgba(0,0,0,.48);
+}
+@media(max-width:640px){
+ .file-select .picker-menu:not([hidden]){left:5px;right:5px;padding:7px;gap:6px;top:calc(100% - 1px)}
+ .file-select .picker-menu button{min-height:59px}
+ .file-select .pick-chevron,.file-select .picker-menu .menu-chevron{width:19px;height:19px;flex-basis:19px}
+}
