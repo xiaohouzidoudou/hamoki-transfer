@@ -311,3 +311,102 @@ footer{justify-content:center;margin:35px auto 18px;color:var(--muted);text-alig
  .countdown-row>small{display:none}
  .page-glow::before,.page-glow::after{width:190px;height:180px}
 }
+
+/* Mobile hotfix: the legacy .picker-menu button span rule was forcing
+   every label to 20px, making Chinese characters stack vertically. */
+.picker-menu button .menu-copy{
+ display:flex;flex:1 1 auto;min-width:0;width:auto!important;
+ flex-direction:column;align-items:flex-start;gap:4px;text-align:left!important;
+ color:var(--ink);font-size:inherit;
+ writing-mode:horizontal-tb;
+}
+.picker-menu button .menu-copy strong,
+.picker-menu button .menu-copy small{
+ display:block;width:100%;max-width:100%;text-align:left;
+ line-height:1.45;white-space:normal;writing-mode:horizontal-tb;
+ overflow-wrap:break-word;
+}
+.picker-menu button .menu-copy strong{font-size:15px;font-weight:820}
+.picker-menu button .menu-copy small{font-size:11px;font-weight:450;color:var(--muted)}
+.picker-menu button .menu-chevron{width:auto!important;flex:0 0 auto;margin-left:auto}
+.picker-menu button .menu-icon{flex-shrink:0}
+.receive-intro-copy{flex:1 1 auto;min-width:0}
+.receive-hero .receive-intro-copy h2{font-size:clamp(19px,4.3vw,26px);margin:0 0 10px;text-align:left;white-space:normal;overflow-wrap:normal}
+.receive-hero .receive-intro-copy p{font-size:12px;max-width:290px}
+.pickup-limit{
+ width:max-content;max-width:100%;display:flex;align-items:center;gap:5px;
+ margin:3px auto 10px;padding:8px 14px;
+ border:1px solid rgba(230,114,132,.35);border-radius:999px;
+ background:rgba(255,209,216,.55);
+ color:#a83f58;font-size:12px;font-weight:810;text-align:center;
+}
+.pickup-limit span[aria-hidden]{font-size:17px;line-height:1}
+.pickup-limit .pickup-limit-note{font-size:11px;font-weight:550;color:#b46678}
+html[data-theme="dark"] .pickup-limit{
+ background:rgba(124,34,52,.36);border-color:rgba(255,147,164,.35);color:#ffabb6
+}
+html[data-theme="dark"] .pickup-limit .pickup-limit-note{color:#f49aaa}
+/* Strong selectors override older dark-theme styles, including copy icons. */
+html[data-theme="dark"] .done #copy-code,
+html[data-theme="light"] .done #copy-code{
+ background:linear-gradient(135deg,#baff8f,#43d74b)!important;
+ color:#073b20!important;
+ border:1.5px solid #66df59!important;
+ box-shadow:0 0 0 1px rgba(185,255,135,.1),0 3px 12px rgba(23,172,49,.15)!important;
+ opacity:1!important;
+ min-width:68px;min-height:45px;flex-shrink:0;
+}
+html[data-theme="dark"] .done #copy-code svg,
+html[data-theme="light"] .done #copy-code svg{color:#073b20!important;stroke:#073b20!important;opacity:1!important}
+html[data-theme="dark"] .done #copy-code::after,
+html[data-theme="light"] .done #copy-code::after{color:#073b20!important;font-weight:820}
+.done .code-wrap{min-width:0;flex-wrap:nowrap}
+.done #done-code.code-tiles{min-width:0;flex:1 1 auto}
+.done #done-code .code-tile{min-width:0;overflow:hidden}
+.done-share-grid .share-guide{
+ display:flex;flex-direction:column;gap:8px;width:100%;
+ min-width:0;margin:3px 0 0;padding:12px;
+ border-radius:13px;border:1px solid var(--line);
+ background:var(--soft);
+}
+.done-share-grid .share-guide[hidden]{display:none!important}
+.share-guide strong{font-size:14px;color:var(--ink)}
+.share-guide p{font-size:12px;color:var(--muted);margin:0;line-height:1.6;text-align:left}
+.share-guide-link{display:flex;flex-direction:column;gap:7px;min-width:0}
+.share-guide-link input{
+ display:block;min-width:0;width:100%;box-sizing:border-box;
+ border:1px solid var(--line);border-radius:9px;
+ font-size:12px;padding:9px 10px;color:var(--ink);background:var(--field)
+}
+.done-share-grid .share-guide-link button,
+.done-share-grid .share-system{
+ width:100%;min-height:40px;border-radius:10px;
+ background:linear-gradient(100deg,#baff78,#44d74d);color:#0b3f25;
+ font-size:13px;font-weight:770;border:1px solid #6fdb56;
+}
+.done-share-grid .share-system{background:transparent;color:var(--ink);border-color:var(--line)}
+.done-share-grid .share-system[hidden]{display:none!important}
+.done-share-grid .social-share button[aria-pressed="true"]{box-shadow:0 0 0 2px #b8ff80}
+@media(max-width:640px){
+ .receive-hero{gap:11px;align-items:center;padding:4px 1px 11px}
+ .receive-hero .receive-intro-copy h2{font-size:20px;line-height:1.3}
+ .receive-hero .receive-intro-copy p{font-size:11px;line-height:1.55}
+ .receive-hero img{flex:0 0 85px;width:85px;height:85px}
+ .picker-menu button .menu-copy strong{font-size:14px}
+ .picker-menu button .menu-copy small{font-size:10px}
+ .pickup-limit{margin:2px auto 9px;padding:7px 11px;font-size:11px}
+ .pickup-limit .pickup-limit-note{font-size:10px}
+ .done .code-wrap{gap:4px}
+ .done #done-code.code-tiles{gap:4px}
+ html[data-theme="dark"] .done #copy-code,html[data-theme="light"] .done #copy-code{
+   min-width:62px;min-height:44px;padding:0 6px;
+ }
+}
+@media(max-width:365px){
+ .menu-copy small{font-size:9px!important}
+ .picker-menu button{gap:7px;padding:8px}
+ .done #done-code .code-tile{font-size:clamp(22px,7vw,29px);border-radius:9px}
+ .done #copy-code::after{font-size:10px}
+ .receive-hero img{width:70px;height:70px;flex-basis:70px}
+ .receive-hero .receive-intro-copy h2{font-size:18px}
+}
