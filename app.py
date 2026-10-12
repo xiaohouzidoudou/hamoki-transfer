@@ -1,7 +1,6 @@
 """Hamoki Transfer: small original browser-only temporary file handoff service."""
 from __future__ import annotations
 
-import hmac
 from contextlib import contextmanager
 import io
 import os
@@ -16,6 +15,7 @@ import qrcode
 from qrcode.image.svg import SvgPathImage
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 TTL = {'1h': 3600, '24h': 86400, '7d': 7 * 86400}
@@ -32,7 +32,6 @@ def create_app(test_config=None):
     app = Flask(__name__)
     app.config.update(
         DATA_DIR=os.environ.get('DATA_DIR', '/data'),
-        UPLOAD_SECRET=os.environ.get('UPLOAD_SECRET', ''),
         PUBLIC_URL=os.environ.get('PUBLIC_URL', ''),
         MAX_CONTENT_LENGTH=int(os.environ.get('MAX_UPLOAD_MB', '250')) * 1024 * 1024,
         TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '4096')) * 1024 * 1024,
@@ -40,8 +39,8 @@ def create_app(test_config=None):
     )
     if test_config:
         app.config.update(test_config)
-    if len(app.config['UPLOAD_SECRET']) < 24 or app.config['UPLOAD_SECRET'].startswith('replace_'):
-        raise RuntimeError('Set UPLOAD_SECRET to a random string at least 24 characters long')
+    # Only our loopback-bound reverse proxy is trusted to append the client IP.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
 
     root = Path(app.config['DATA_DIR']).resolve()
     files = root / 'files'
@@ -91,11 +90,6 @@ def create_app(test_config=None):
     if not app.config['TESTING']:
         threading.Thread(target=clean_loop, daemon=True, name='hamoki-cleaner').start()
 
-    def require_upload_key():
-        key = request.headers.get('X-Upload-Key', '')
-        if not hmac.compare_digest(key, app.config['UPLOAD_SECRET']):
-            abort(403, description='没有上传权限，请使用私密上传链接')
-
     def limit(action, count, window=60):
         address = request.remote_addr or 'unknown'
         k = (action, address)
@@ -140,7 +134,6 @@ def create_app(test_config=None):
     @app.post('/api/send')
     def upload():
         limit('upload', 10)
-        require_upload_key()
         ttl = request.form.get('ttl', '24h')
         if ttl not in TTL:
             abort(400, description='保存时间不正确')
