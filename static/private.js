@@ -25,7 +25,7 @@ async function refresh(force=false){
  if(data.has_file)el('private-filename').textContent=data.filename+' · '+(data.size/1024/1024).toFixed(2)+' MB';
  }catch(e){if(!ready)return;message(e.message)}
 }
-el('private-create').onclick=async()=>{try{const data=await json(await mutation('create',{label:'我的设备'}));paired=true;await boot();window.prompt('保存此唯一配对码，用另一台设备输入一次。配对码请勿分享给他人：',data.invite);message('私人空间创建成功。请保存弹出的配对码。')}catch(e){message(e.message)}};
+el('private-create').onclick=async()=>{try{await json(await mutation('create',{label:'我的设备'}));paired=true;await boot();await openSettings();message('创建成功，配对码已在设备管理中显示。')}catch(e){message(e.message)}};
 el('private-join').onclick=async()=>{try{await json(await mutation('join',{invite:el('private-invite-input').value.trim(),label:'我的设备'}));await boot();message('设备已绑定成功')}catch(e){message(e.message)}};
 el('private-copy').onclick=async()=>{try{await navigator.clipboard.writeText(el('private-inbox').textContent);message('内容已复制')}catch{message('无法自动复制，请长按内容手动复制')}};
 function renderChosenFiles(){
@@ -74,46 +74,41 @@ async function showDevices(){
   line.append(label,actions);list.append(line);
  }
 }
-el('private-settings-toggle').onclick=async()=>{
- el('private-settings').hidden=false;
- el('private-invite-show').dataset.reissue='false';
- el('private-invite-display').textContent='点击查看配对码';
- el('private-invite-copy').hidden=true;
- el('private-invite-show').hidden=false;
- el('private-invite-show').textContent='查看配对码';
- el('private-invite-notice').textContent='';
- try{await showDevices()}catch(e){message(e.message)}
-};
-async function loadInvite(){
- const data=await json(await api('invite'));
- if(data.available){
-  el('private-invite-display').textContent=data.invite;
-  el('private-invite-copy').hidden=false;
-  el('private-invite-show').hidden=true;
-  el('private-invite-notice').textContent='配对码可用于绑定更多设备，请妥善保管。';
- }else{
-  el('private-invite-notice').textContent='旧配对码无法反查，可以生成新的配对码，现有已绑定设备不受影响。';
-  el('private-invite-show').textContent='生成新配对码';
-  el('private-invite-show').hidden=false;
-  el('private-invite-copy').hidden=true;
- }
- return data;
-}
-el('private-invite-show').onclick=async()=>{
- const button=el('private-invite-show');button.disabled=true;
+let inviteLoading=false;
+async function loadInviteInline(){
+ if(inviteLoading)return;
+ inviteLoading=true;
+ const display=el('private-invite-display'),copy=el('private-invite-copy'),notice=el('private-invite-notice');
+ display.textContent='正在读取配对码…';
+ copy.hidden=true;
+ notice.textContent='';
  try{
-  if(button.dataset.reissue==='true'){
-   if(!confirm('生成新配对码会使旧码失效，但已绑定设备不会掉线。是否继续？'))return;
-   await json(await mutation('invite/reissue',{}));button.dataset.reissue='false';
-   await loadInvite();
+  let data=await json(await api('invite'));
+  if(!data.available){
+   // Pre-upgrade rooms only stored an irreversible hash. Reissue silently
+   // and keep all current device credentials and private content intact.
+   data=await json(await mutation('invite/reissue',{}));
+   notice.textContent='旧配对码已自动更新，原来绑定的设备仍可正常使用。';
   }else{
-   const data=await loadInvite();
-   button.dataset.reissue=data.available?'false':'true';
+   notice.textContent='仅已绑定设备可查看，请妥善保管。';
   }
- }catch(e){message('查看配对码失败：'+e.message)}finally{button.disabled=false}
-};
+  if(!data.available||typeof data.invite!=='string')throw Error('服务器没有返回有效配对码');
+  display.textContent=data.invite;
+  copy.hidden=false;
+ }catch(e){
+  display.textContent='配对码读取失败';
+  notice.textContent='请稍后重新进入设备管理：'+e.message;
+ }finally{inviteLoading=false}
+}
+async function openSettings(){
+ el('private-settings').hidden=false;
+ // Render code and device list independently so one failure cannot hide the other.
+ await Promise.allSettled([loadInviteInline(),showDevices().catch(e=>message('设备列表读取失败：'+e.message))]);
+}
+el('private-settings-toggle').onclick=openSettings;
 el('private-invite-copy').onclick=async()=>{
- try{await navigator.clipboard.writeText(el('private-invite-display').textContent);message('配对码已复制')}
+ const code=el('private-invite-display').textContent;
+ try{await navigator.clipboard.writeText(code);message('配对码已复制')}
  catch{message('复制失败，请长按配对码手动复制')}
 };
 el('private-settings-close').onclick=()=>el('private-settings').hidden=true;
