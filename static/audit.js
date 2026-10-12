@@ -76,5 +76,5 @@ get('audit-logout').onclick=async()=>{
 };
 const today=new Date();get('audit-date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
 get('audit-date').max=get('audit-date').value;
-read(api('session')).then(state=>{showLogin(state.authenticated);if(state.authenticated)refresh()}).catch(e=>message(e.message));
+api('session').then(read).then(state=>{showLogin(state.authenticated);if(state.authenticated)refresh()}).catch(e=>message(e.message));
 })();
