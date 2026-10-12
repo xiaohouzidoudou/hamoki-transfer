@@ -14,6 +14,7 @@
 </head>
 <body class="public-share-page">
 <main>
+  <p class="pickup-limit public-limit"><span aria-hidden="true">♡</span> 最多领取 10 次 <span class="pickup-limit-note">· 到期自动销毁</span></p>
   <header class="public-hero">
     <div class="public-brand"><img src="../static/hamoki-avatar.webp" alt="" width="54" height="54"><span>好奇猴<strong>快传</strong><small>简单 · 快速 · 安全分享</small></span></div>
     <h1 class="page-brand">领取<span>分享内容</span></h1>
@@ -33,11 +34,11 @@
   <pre>{{ text }}</pre>
   {% endif %}
   <a id="manual-download" class="download" href="?download=1">没有弹出下载？点这里手动下载</a>
-  <small>首次进入会自动尝试下载。文件过期后无法再次下载，<span class="danger-text">最多领取 10 次</span>。</small>
+  <small>首次进入会自动尝试下载，文件过期后无法再次下载。</small>
   {% else %}
   <h2 class="receive-message-title">收到一段文字</h2>
   <pre>{{ text }}</pre>
-  <small>文字已显示在上方，无需再输入取件码。<span class="danger-text">最多领取 10 次</span>。</small>
+  <small>文字已显示在上方，无需再输入取件码。</small>
   {% endif %}
 </main>
 </body>
