@@ -113,3 +113,17 @@ html[data-theme="dark"] body.public-share-page{
  .public-share-page .expiry-countdown{margin-bottom:7px}
  .public-share-page::before,.public-share-page::after{width:190px;height:150px}
 }
+
+/* Gentle rose limit above the centered public pickup header. */
+.public-share-page .public-limit{
+ display:flex;align-items:center;justify-content:center;gap:5px;
+ margin:0 auto 19px;padding:8px 14px;width:max-content;max-width:100%;
+ background:rgba(255,214,221,.72);border:1px solid rgba(237,145,159,.39);
+ color:#a94b65;border-radius:100px;font-size:12px;font-weight:790;
+}
+.public-share-page .public-limit .pickup-limit-note{font-size:11px;color:#ba7585;font-weight:500}
+html[data-theme="dark"] .public-share-page .public-limit{
+ background:rgba(127,47,69,.35);border-color:rgba(247,143,161,.37);color:#ffadb8;
+}
+html[data-theme="dark"] .public-share-page .public-limit .pickup-limit-note{color:#ffb2bb}
+@media(max-width:520px){.public-share-page .public-limit{font-size:11px;padding:7px 11px;margin-bottom:14px}}
