@@ -1,0 +1,9 @@
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light dark}
+body.public-share-page{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16px}
+.public-share-page main{max-width:520px;margin:48px auto;background:#fff;border-radius:20px;padding:28px;box-shadow:0 14px 40px #18283b13}
+.public-share-page h1{font-size:22px;margin:0 0 10px}
+.public-share-page p{line-height:1.65;color:#606c7b}
+.public-share-page pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7fa;border-radius:12px;padding:16px;max-height:300px;overflow:auto;color:#253040}
+.public-share-page a.download{display:block;text-align:center;background:#1678e8;color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:650;margin-top:20px}
+.public-share-page small{display:block;color:#8491a0;text-align:center;margin-top:20px}
+@media(prefers-color-scheme:dark){body.public-share-page{background:#101116;color:#f3f5f9}.public-share-page main{background:#212631}.public-share-page p,.public-share-page small{color:#a6b3c0}.public-share-page pre{background:#151a22;color:#f1f3f7}}
