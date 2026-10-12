@@ -107,11 +107,10 @@
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
-          <div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div>
-          <div class="check" aria-hidden="true">✓</div>
-          <h2>传送成功</h2>
-          <p class="muted">取件码已经准备好，扫码即可领取。</p>
-          <span class="result-label">你的专属取件码</span>
+          <div class="done-head">
+            <div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div>
+            <h2 class="done-title">传送成功 · 专属取件码</h2>
+          </div>
           <div class="code-wrap">
             <strong id="done-code" class="code"></strong>
             <button id="copy-code" class="copy-code" type="button" aria-label="复制取件码" title="复制取件码">
