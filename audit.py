@@ -94,7 +94,7 @@ def setup_audit(app, db, root, limit):
         if not route:
             # Only a constrained path is logged for scanning detection;
             # no parameters, user-controlled queries or secret paths.
-            return "可疑路径", (re.sub(r"[^a-zA-Z0-9/_.-]", "?", path)[:100] or "/")
+            return "可疑路径", "未匹配路径"
         mapping = {
             "/": "访问首页",
             "/admin/logs": "访问日志页",
