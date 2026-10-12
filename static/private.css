@@ -1,0 +1,33 @@
+/* Additional private channel styles: reuse the existing Hamoki palette. */
+.private-workspace{padding:16px 24px 25px}
+.private-panel{padding:20px;margin-bottom:16px;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 5px 20px rgba(14,85,42,.035)}
+.private-panel h2{font-size:20px;margin:0;letter-spacing:-.4px;color:var(--ink)}
+.private-section-heading,.private-status{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
+.private-section-heading small,.private-muted{font-size:12px;color:var(--muted);line-height:1.6}
+.private-onboard-actions{margin:18px 0}
+.private-join{display:grid;gap:9px;margin-top:15px}
+.private-join label{font-size:13px;color:var(--muted)}
+.private-join input{letter-spacing:.3px;font-size:13px}
+.private-inbox{white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;background:var(--soft);border:1px solid var(--line);border-radius:13px;line-height:1.7;min-height:80px}
+.private-file-row{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:space-between}
+.private-file-row span{min-width:0;overflow-wrap:anywhere;font-size:13px}
+.private-send-tools{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:12px}
+.private-send-tools button{min-width:130px}
+.private-file-label{cursor:pointer}
+.private-connected{color:#24994d;font-size:13px;font-weight:700}
+.private-text-button{background:none;border:0;color:var(--muted);font-size:12px;text-decoration:underline}
+.private-message{font-size:13px;text-align:center;color:var(--ink);min-height:16px}
+.private-device{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.private-device span{overflow-wrap:anywhere}
+.private-status{padding:5px 2px}
+.tabs:has(#tab-private){margin:15px 12px 0;gap:2px}
+.tabs:has(#tab-private) button{min-width:0;width:25%;font-size:12px;padding:7px 2px;gap:4px}
+.tabs:has(#tab-private) button svg{width:15px;height:15px}
+@media(max-width:640px){
+.private-workspace{padding:12px}
+.private-panel{padding:15px}
+.private-section-heading h2{font-size:18px}
+.tabs:has(#tab-private) button{font-size:11px}
+.tabs:has(#tab-private) button svg{display:none}
+.private-send-tools button{min-width:100px}
+}

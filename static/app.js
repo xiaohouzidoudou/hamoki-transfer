@@ -153,7 +153,7 @@ function flash(message) {
 }
 let activePane = 'send';
 function pane(name) {
-  const tabNames = ['send', 'get', 'history'];
+  const tabNames = ['private', 'send', 'get', 'history'];
   const nextIndex = tabNames.indexOf(name);
   const currentIndex = tabNames.indexOf(activePane);
   if (nextIndex >= 0) {
@@ -162,8 +162,8 @@ function pane(name) {
       nextIndex < currentIndex ? 'backward' : 'forward';
   }
   document.body.classList.toggle('is-done', name === 'done');
-  ['send', 'get', 'history', 'done'].forEach(item => {
-    $('pane-' + item).hidden = item !== name;
+  ['private', 'send', 'get', 'history', 'done'].forEach(item => {
+    (item === 'private' ? $('private-workspace') : $('pane-' + item)).hidden = item !== name;
   });
   for (const tab of tabNames) {
     $('tab-' + tab).classList.toggle('active', name === tab);
@@ -171,6 +171,7 @@ function pane(name) {
   }
   activePane = name;
   if (name === 'history') renderHistory();
+  if (name === 'private') window.hamokiPrivateOpen?.();
   flash('');
 }
 // Slide the highlight, rather than abruptly recoloring each expiry option.
@@ -258,6 +259,7 @@ $('drop').addEventListener('drop', event => {
     setFiles(files, files.length > 1 ? 'multiple' : 'single');
   }
 });
+$('tab-private').onclick = () => pane('private');
 $('tab-send').onclick = () => pane('send');
 $('tab-get').onclick = () => pane('get');
 $('tab-history').onclick = () => pane('history');
@@ -465,5 +467,5 @@ if (incoming) {
   $('code-input').value = incoming;
   $('lookup').click();
 } else {
-  pane('send');
+  pane('private');
 }
