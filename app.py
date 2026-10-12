@@ -222,7 +222,10 @@ def create_app(test_config=None):
                 ).fetchone()
             if row is None:
                 abort(404, description='取件码不存在或已过期')
-            con.execute('UPDATE shares SET remaining=remaining-1 WHERE code=?', (code,))
+            # For a combined share, only downloading the file counts toward
+            # its five downloads; revealing the accompanying text does not.
+            if expected_kind != 'text' or row['kind'] == 'text':
+                con.execute('UPDATE shares SET remaining=remaining-1 WHERE code=?', (code,))
             return row
 
     @app.post('/api/text/<code>')
