@@ -55,17 +55,17 @@
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
           <div class="summer-intro"><div><span class="intro-kicker">和好奇猴一起出发</span><h1>轻松传文件<br><em>分享更简单</em></h1><p>大文件也能轻松传，安全高效分享给好友</p></div><img src="static/hamoki-avatar.webp" alt="好奇猴探险家" width="128" height="128"></div>
           <div id="drop" class="file-select">
-            <button id="pick" class="file-pick" type="button" aria-expanded="true" aria-controls="picker-menu">
+            <button id="pick" class="file-pick" type="button" aria-expanded="false" aria-controls="picker-menu">
               <span class="file-symbol" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
               </span>
               <span class="pick-copy"><strong>选择文件</strong><small>单次总大小最大 5 GB</small></span>
-              <span class="pick-arrow" aria-hidden="true">⌄</span>
+              <svg class="pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
             </button>
-            <div class="picker-menu" id="picker-menu">
-              <button type="button" id="pick-single"><span class="menu-icon single" aria-hidden="true">▤</span><span class="menu-copy"><strong>单个文件</strong><small>选择一个文件进行上传</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
-              <button type="button" id="pick-multiple"><span class="menu-icon multiple" aria-hidden="true">▣</span><span class="menu-copy"><strong>多个文件</strong><small>选择多个文件一起上传</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
-              <button type="button" id="pick-folder"><span class="menu-icon folder" aria-hidden="true">▱</span><span class="menu-copy"><strong>整个文件夹</strong><small>选择文件夹，自动打包传送</small></span><span class="menu-chevron" aria-hidden="true">›</span></button>
+            <div class="picker-menu" id="picker-menu" hidden>
+              <button type="button" id="pick-single"><span class="menu-icon single" aria-hidden="true">▤</span><span class="menu-copy"><strong>单个文件</strong><small>选择一个文件进行上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+              <button type="button" id="pick-multiple"><span class="menu-icon multiple" aria-hidden="true">▣</span><span class="menu-copy"><strong>多个文件</strong><small>选择多个文件一起上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+              <button type="button" id="pick-folder"><span class="menu-icon folder" aria-hidden="true">▱</span><span class="menu-copy"><strong>整个文件夹</strong><small>选择文件夹，自动打包传送</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
             </div>
             <input type="file" id="file" hidden>
             <input type="file" id="files" multiple hidden>
