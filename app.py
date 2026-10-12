@@ -13,7 +13,7 @@ from urllib.parse import quote
 
 import qrcode
 from qrcode.image.svg import SvgPathImage
-from flask import Flask, abort, jsonify, render_template, request, send_file, Response
+from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -305,12 +305,15 @@ def create_app(test_config=None):
         if row is None:
             abort(404, description='分享链接不存在或已经过期')
         if row['kind'] == 'text':
-            # Plain UTF-8 text is immediately readable without a pickup form.
+            # Text-only links still use one of the five available text pickups.
             item = consume(row['code'], 'text')
-            return Response(item['body'], content_type='text/plain; charset=utf-8')
-        if row['body'] and request.args.get('download') != '1':
-            # Keep the attached text visible rather than silently discarding it.
-            return render_template('public_share.html', token=token, name=row['name'], text=row['body'])
+            return render_template('public_share.html', has_file=False,
+                                   name=row['name'], text=item['body'])
+        if request.args.get('download') != '1':
+            # Show the waiting screen immediately; the browser starts one
+            # download in the background after the landing page is visible.
+            return render_template('public_share.html', has_file=True,
+                                   name=row['name'], text=row['body'])
         path = files / row['code']
         if not path.is_file():
             abort(404, description='文件不存在或已经删除')
