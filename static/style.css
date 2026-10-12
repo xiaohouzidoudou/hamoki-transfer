@@ -258,3 +258,12 @@ html[data-theme="dark"] .file-pick:hover{background:var(--blue-wash);border-colo
   .tabs button svg{width:15px;height:15px}
   .history-item{padding:10px}
 }
+
+
+/* Public link: copy-and-send convenience, in the compact success panel. */
+.public-link-panel{display:flex;align-items:center;gap:8px;margin:2px 0 0;padding:11px 12px;background:var(--soft);border:1px solid var(--line);border-radius:12px;text-align:left}
+.public-link-label{white-space:nowrap;font-size:11px;color:var(--muted)}
+.public-link-url{font-size:12px;color:var(--blue);min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}
+.public-link-copy{border:0;border-radius:8px;background:var(--panel);color:var(--ink);font-size:12px;font-weight:650;padding:8px 10px;flex-shrink:0;cursor:pointer}
+.public-link-panel+.hint{margin-top:7px;margin-bottom:14px;text-align:left}
+@media(max-width:520px){.public-link-panel{gap:6px;padding:9px 8px}.public-link-label{font-size:10px}.public-link-copy{padding:7px 8px}}
