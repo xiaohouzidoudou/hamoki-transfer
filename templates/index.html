@@ -2,21 +2,26 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f8fafc">
-  <meta name="description" content="无需安装软件，通过网页上传文件、获取取件码和二维码，手机扫码就能领取。">
-  <title>好奇猴快传｜扫码即取</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f5f7">
+  <meta name="description" content="好奇猴快传，让文件传递像呼吸一样简单。上传文件，生成取件码与二维码，手机扫码直接领取。">
+  <title>好奇猴快传 · 传文件，就这么简单</title>
   <script src="/static/theme.js"></script>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
+<div class="page-glow" aria-hidden="true"></div>
 <div class="shell">
-  <header>
-    <a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> 好奇猴<b>快传</b></a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="好奇猴快传首页">
+      <span class="brand-icon" aria-hidden="true">🐵</span>
+      <span class="brand-name">好奇猴<span>快传</span></span>
+    </a>
     <div class="header-actions">
-      <span class="label">私人网页快传</span>
-      <label class="theme-switch" for="theme-mode"><span>外观</span>
+      <span class="header-note"><span class="live-dot"></span> 简单、轻快、随时传</span>
+      <label class="theme-switch" for="theme-mode">
+        <span class="theme-caption">外观</span>
         <select id="theme-mode" aria-label="切换网页外观">
           <option value="auto">跟随系统</option>
           <option value="light">亮色</option>
@@ -25,31 +30,108 @@
       </label>
     </div>
   </header>
-  <div class="hero"><h1>上传文件，扫码即取</h1><p>只要浏览器，电脑和手机都能传。不用安装，不用注册。</p></div>
-  <main class="card">
-    <div class="tabs" role="tablist">
-      <button id="tab-send" class="active" type="button">寄文件</button>
-      <button id="tab-get" type="button">取文件</button>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow"><span class="eyebrow-dot"></span> 不用安装 · 不用注册 · 随时传送</div>
+      <h1 id="hero-title">传文件，<span>就这么简单。</span></h1>
+      <p>从电脑到手机，从这一端到另一端。<br class="desktop-break">上传、扫码、领取，三步搞定。</p>
+    </section>
+
+    <div class="workspace">
+      <div class="card">
+        <div class="tabs" role="tablist" aria-label="文件传递">
+          <button id="tab-send" class="active" type="button" role="tab" aria-controls="pane-send" aria-selected="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            寄文件
+          </button>
+          <button id="tab-get" type="button" role="tab" aria-controls="pane-get" aria-selected="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            取文件
+          </button>
+        </div>
+
+        <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
+          <div id="drop" class="drop" tabindex="0" role="button" aria-label="点击或拖入文件上传">
+            <div class="upload-illustration" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><rect x="10" y="14" width="28" height="29" rx="6"/><path d="M24 31V9m0 0-8 8m8-8 8 8"/></svg>
+            </div>
+            <h2>轻轻一放，即刻传送</h2>
+            <p>拖拽文件到这里，或点击下方选择</p>
+            <button id="pick" class="secondary file-pick" type="button">选择文件 <span aria-hidden="true">↗</span></button>
+            <input type="file" id="file" hidden>
+            <div id="file-info" class="file-info" role="status"></div>
+            <button id="clear-file" class="clear-file" type="button" hidden>移除文件</button>
+          </div>
+
+          <div class="separator"><span>也可以直接传文字</span></div>
+          <label class="visually-hidden" for="text">要传送的文字</label>
+          <textarea id="text" rows="3" maxlength="65536" placeholder="粘贴链接、文字或者一段临时备忘…"></textarea>
+
+          <div class="row">
+            <div class="row-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> 文件保留时间</div>
+            <select id="ttl" aria-label="文件保留时间"><option value="1h">1 小时</option><option value="24h" selected>24 小时</option><option value="7d">7 天</option></select>
+          </div>
+
+          <div id="upload-progress" class="upload-progress" hidden>
+            <div class="progress-text"><span>正在上传…</span><span id="upload-percent">0%</span></div>
+            <progress id="progress-bar" value="0" max="100"></progress>
+          </div>
+
+          <button class="primary full" type="button" id="upload">生成取件码 <span aria-hidden="true">→</span></button>
+          <p class="hint" id="send-tip">上传需使用你的私密链接，领取无需登录。</p>
+        </section>
+
+        <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
+          <div class="receive-icon" aria-hidden="true">
+            <svg viewBox="0 0 36 36"><rect x="7" y="7" width="22" height="22" rx="6"/><path d="M12 14h4v4h-4zm8 0h4v4h-4zm-8 8h4v4h-4zm8 0v4h4"/></svg>
+          </div>
+          <h2>输入取件码</h2>
+          <p class="muted">拿到取件码，即可领取对方分享的内容。</p>
+          <label class="fieldlabel" for="code-input">12 位取件码</label>
+          <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A3BC5D7EF9GH">
+          <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
+          <div id="found" class="found" hidden>
+            <div class="file-line">
+              <span class="file-icon" aria-hidden="true">📄</span>
+              <div class="file-desc"><strong id="found-name"></strong><small id="found-details"></small></div>
+            </div>
+            <button id="claim" type="button" class="primary full">领取文件</button>
+            <pre id="received-text" hidden></pre>
+            <button id="copy-text" class="secondary" type="button" hidden>复制文字</button>
+          </div>
+        </section>
+
+        <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
+          <div class="check" aria-hidden="true">✓</div>
+          <h2>传送成功</h2>
+          <p class="muted">取件码已经准备好，扫码即可领取。</p>
+          <span class="result-label">你的专属取件码</span>
+          <div class="code-wrap">
+            <strong id="done-code" class="code"></strong>
+            <button id="copy-code" class="copy-code" type="button" aria-label="复制取件码" title="复制取件码">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></svg>
+            </button>
+          </div>
+          <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>打开手机相机扫码领取</span></div>
+          <div class="actions">
+            <button id="copy-link" class="primary" type="button">复制领取链接</button>
+            <button id="again" class="secondary" type="button">再传一个</button>
+          </div>
+          <p class="hint">过期自动清理 · 最多领取 5 次</p>
+        </section>
+
+        <p id="message" role="status" aria-live="polite" class="message"></p>
+      </div>
+
+      <div class="benefits" aria-label="好奇猴快传的特点">
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm3 15h4"/></svg> 手机电脑都能用</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg> 到期自动清理</span>
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16M7 5h10M4 13h16M7 17h10"/></svg> 无需安装软件</span>
+      </div>
     </div>
-    <section id="pane-send" class="pane">
-      <div id="drop" class="drop"><div class="big-icon">&#8593;</div><h2>把文件拖到这里</h2><p>或者点击选择文件</p><button id="pick" class="secondary" type="button">选择文件</button><input type="file" id="file" hidden><div id="file-info" class="file-info"></div></div>
-      <div class="separator">或者传一段文字</div>
-      <textarea id="text" rows="3" maxlength="65536" placeholder="粘贴网址、文字或临时备忘…"></textarea>
-      <label class="row" for="ttl"><span>保存时间</span><select id="ttl"><option value="1h">1 小时</option><option value="24h" selected>24 小时</option><option value="7d">7 天</option></select></label>
-      <button class="primary full" type="button" id="upload">立即传送 &#8594;</button>
-      <p class="muted small" id="send-tip">上传使用私密链接，取件不需登录。</p>
-    </section>
-    <section id="pane-get" class="pane" hidden>
-      <p class="muted">输入取件码，立即查看临时文件。</p>
-      <label class="fieldlabel" for="code-input">取件码</label>
-      <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="请输入 12 位取件码">
-      <button class="primary full" id="lookup" type="button">查找文件 &#8594;</button>
-      <div id="found" class="found" hidden><div class="file-line"><span class="file-icon">&#128196;</span><div><strong id="found-name"></strong><small id="found-details"></small></div></div><button id="claim" type="button" class="primary full">下载</button><pre id="received-text" hidden></pre><button id="copy-text" class="secondary" type="button" hidden>复制文字</button></div>
-    </section>
-    <section id="pane-done" class="pane done" hidden><div class="check">&#10003;</div><h2>上传成功！</h2><p class="muted">手机扫码或输入取件码即可领取。</p><div id="done-code" class="code"></div><img id="done-qr" alt="取件二维码" width="196" height="196"><div class="actions"><button id="copy-link" class="primary" type="button">复制取件链接</button><button id="again" class="secondary" type="button">继续传送</button></div><p class="muted small">到期自动清理，每份最多取件 5 次。</p></section>
-    <p id="message" role="status" aria-live="polite" class="message"></p>
   </main>
-  <footer>好奇猴快传 &#183; 免费开源 &#183; 无需代理，无需安装</footer>
+  <footer><span>© 好奇猴快传</span><span>简单传递，每一次都轻松。</span><a href="https://github.com/xiaohouzidoudou/hamoki-transfer" target="_blank" rel="noopener noreferrer">开源项目 ↗</a></footer>
 </div>
 </body>
 </html>
