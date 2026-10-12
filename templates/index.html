@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8fafc">
-  <meta name="description" content="Simple temporary file transfer in your browser">
-  <title>Hamoki 快传</title>
+  <meta name="description" content="无需安装软件，通过网页上传文件、获取取件码和二维码，手机扫码就能领取。">
+  <title>好奇猴快传｜扫码即取</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
 <div class="shell">
-  <header><a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> Hamoki <b>Transfer</b></a><span class="label">私人网页快传</span></header>
+  <header><a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> 好奇猴<b>快传</b></a><span class="label">私人网页快传</span></header>
   <div class="hero"><h1>上传文件，扫码即取</h1><p>只要浏览器，电脑和手机都能传。不用安装，不用注册。</p></div>
   <main class="card">
     <div class="tabs" role="tablist">
@@ -29,14 +29,14 @@
     <section id="pane-get" class="pane" hidden>
       <p class="muted">输入取件码，立即查看临时文件。</p>
       <label class="fieldlabel" for="code-input">取件码</label>
-      <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="ABCD2345EFGH">
+      <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" placeholder="请输入 12 位取件码">
       <button class="primary full" id="lookup" type="button">查找文件 &#8594;</button>
       <div id="found" class="found" hidden><div class="file-line"><span class="file-icon">&#128196;</span><div><strong id="found-name"></strong><small id="found-details"></small></div></div><button id="claim" type="button" class="primary full">下载</button><pre id="received-text" hidden></pre><button id="copy-text" class="secondary" type="button" hidden>复制文字</button></div>
     </section>
     <section id="pane-done" class="pane done" hidden><div class="check">&#10003;</div><h2>上传成功！</h2><p class="muted">手机扫码或输入取件码即可领取。</p><div id="done-code" class="code"></div><img id="done-qr" alt="取件二维码" width="196" height="196"><div class="actions"><button id="copy-link" class="primary" type="button">复制取件链接</button><button id="again" class="secondary" type="button">继续传送</button></div><p class="muted small">到期自动清理，每份最多取件 5 次。</p></section>
     <p id="message" role="status" aria-live="polite" class="message"></p>
   </main>
-  <footer>Hamoki 快传 &#183; 开源 &#183; 不用 Telegram，不需代理</footer>
+  <footer>好奇猴快传 &#183; 免费开源 &#183; 无需代理，无需安装</footer>
 </div>
 </body>
 </html>
