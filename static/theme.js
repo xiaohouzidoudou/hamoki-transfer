@@ -29,6 +29,18 @@
     if (select) select.value = preference;
   }
 
+  // Crossfade full-page backgrounds on modern browsers; preserve instant
+  // startup and accessibility for reduced-motion preferences.
+  function applyThemeWithMotion() {
+    const reduceMotion = window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.startViewTransition && document.body && !reduceMotion) {
+      document.startViewTransition(() => applyTheme());
+    } else {
+      applyTheme();
+    }
+  }
+
   // 在样式表下载前运行，减少首次打开页面的明暗闪烁。
   applyTheme();
 
@@ -44,13 +56,13 @@
       } catch {
         // 本地存储不可用时不影响当前页面切换。
       }
-      applyTheme();
+      applyThemeWithMotion();
     });
   });
 
   if (systemTheme) {
     const onSystemChange = () => {
-      if (preference === 'auto') applyTheme();
+      if (preference === 'auto') applyThemeWithMotion();
     };
     if (typeof systemTheme.addEventListener === 'function') {
       systemTheme.addEventListener('change', onSystemChange);
