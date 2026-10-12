@@ -26,7 +26,7 @@ $('again').onclick=()=>{setFile(null);$('file').value='';$('text').value='';$('c
 $('lookup').onclick=async()=>{
  const code=$('code-input').value.trim().toUpperCase();if(!code){flash('请输入取件码');return}
  $('found').hidden=true;flash('正在查找…');
- try{const info=await json(await fetch('/api/item/'+encodeURIComponent(code)));$('found-name').textContent=info.name;$('found-details').textContent=info.kind==='text'?'文字内容':Math.round(info.size/1024)+' KB';$('claim').dataset.code=code;$('claim').dataset.kind=info.kind;$('claim').textContent=info.kind==='text'?'领取文字':'下载文件';$('received-text').hidden=true;$('copy-text').hidden=true;$('found').hidden=false;flash('')}
+ try{const info=await json(await fetch('/api/item/'+encodeURIComponent(code)));$('found-name').textContent=info.name;$('found-details').textContent=info.kind==='text'?'文字内容':Math.round(info.size/1024)+' 千字节';$('claim').dataset.code=code;$('claim').dataset.kind=info.kind;$('claim').textContent=info.kind==='text'?'领取文字':'下载文件';$('received-text').hidden=true;$('copy-text').hidden=true;$('found').hidden=false;flash('')}
  catch(e){flash(e.message)}
 };
 $('claim').onclick=async()=>{
