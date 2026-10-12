@@ -13,7 +13,7 @@
 - 每个取件码最多领取 5 次；取件码使用安全随机数生成
 - 服务端生成二维码，另一台设备扫码领取
 - SQLite 保存记录，文件保存在服务器本地
-- 发送方凭私密链接上传；接收方只需取件码，无须登录
+- 任何人打开网页即可上传；接收方凭取件码领取，都无需登录
 - 上传大小限制、总存储容量限制及按 IP 请求限流
 - 下载文件强制以附件形式提供，避免直接在站点执行文件内容
 
@@ -21,26 +21,22 @@
 
 ```sh
 cp .env.example .env
-# 在 .env 中配置 UPLOAD_SECRET、PUBLIC_URL
+# 按部署地址在 .env 中配置 PUBLIC_URL
 mkdir -p data && sudo chown 10001:10001 data
 docker compose up -d --build
 ```
 
 建议通过 HTTPS 反向代理运行，可用 Nginx 或其他 Web 服务器；如部署在 URL 子路径下，请按子路径设置 `PUBLIC_URL` 并调整反向代理路由。
 
-**发送方私密链接（不得公开）：**
-
-`https://send.example.com/#key=YOUR_UPLOAD_SECRET`
-
-首次打开后，浏览器会把密钥保存在当前标签页的会话存储中，并从地址栏清除。上传请求使用请求头提交密钥。**接收方不需要密钥**，只用这样的领取链接：
+**直接开放上传：**任何人打开 `https://send.example.com/` 就可以上传文件或临时文字，无需登录或特殊上传链接。领取时仍然需要取件码或领取链接，例如：
 
 `https://send.example.com/?code=THE_CODE`
 
-不要在截图、聊天记录或公开网页中泄露私密链接。在多人共用的电脑上，不建议长期保留带上传密钥的浏览器会话。需要撤销上传权限时，修改服务器里的 `UPLOAD_SECRET`。
+公网可匿名上传意味着其他访客也能占用空间；请保留上传大小、总容量、速率和过期清理限制，并定期检查磁盘及滥用情况。
 
 ## 安全提示
 
-- 上传密钥至少 24 个字符；可用 `openssl rand -hex 32` 生成
+- 上传入口完全公开；适合轻量分享，不提供用户身份验证或内容审核
 - `.env` 包含私密配置，不要提交到 GitHub
 - 文件并非端到端加密，服务器管理员可以访问存储内容
 - 上线前需要配置 HTTPS、反向代理的上传大小限制、磁盘配额及备份
@@ -53,7 +49,6 @@ docker compose up -d --build
 python -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt pytest
-export UPLOAD_SECRET="$(openssl rand -hex 32)"
 export DATA_DIR=./data
 flask --app app run --port 8000
 pytest -q
