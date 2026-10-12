@@ -4,18 +4,25 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f6ffe9">
+  <script src="../static/theme.js"></script>
   <title>好奇猴快传 · 领取分享内容</title>
   <link rel="stylesheet" href="../static/public_share.css">
+  <link rel="stylesheet" href="../static/public-summer.css">
   <script src="../static/countdown.js" defer></script>
   <script src="../static/public_share.js" defer></script>
 </head>
 <body class="public-share-page">
 <main>
-  <div class="expiry-countdown" data-expiry-countdown data-expires="{{ expires }}" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>计算中…</strong></div>
-  <div class="public-brand"><img src="../static/hamoki-avatar.webp" alt="" width="40" height="40"><span>好奇猴<strong>快传</strong><small>简单 · 快速 · 安全分享</small></span></div>
-  <h1 class="page-brand">领取分享内容</h1>
+  <header class="public-hero">
+    <div class="public-brand"><img src="../static/hamoki-avatar.webp" alt="" width="54" height="54"><span>好奇猴<strong>快传</strong><small>简单 · 快速 · 安全分享</small></span></div>
+    <h1 class="page-brand">领取<span>分享内容</span></h1>
+    <p class="public-intro">输入取件码，或通过好友分享链接直接领取</p>
+    <img class="pickup-mascot" src="../static/hamoki-avatar.webp" alt="好奇猴探险家" width="132" height="132">
+    <div class="expiry-countdown" data-expiry-countdown data-expires="{{ expires }}" aria-label="文件过期倒计时"><span>◷ 剩余时间</span><strong>计算中…</strong></div>
+  </header>
   {% if has_file %}
-  <div class="download-state" role="status" aria-live="polite">
+  <div class="download-state pickup-card" role="status" aria-live="polite">
     <span class="loading-ring" aria-hidden="true"></span>
     <strong>正在弹出下载，请勿操作</strong>
     <p id="wait-tip">正在连接文件服务器，网络较慢时请稍等，不要重复点击。</p>
@@ -28,7 +35,7 @@
   <a id="manual-download" class="download" href="?download=1">没有弹出下载？点这里手动下载</a>
   <small>首次进入会自动尝试下载。文件过期后无法再次下载，<span class="danger-text">最多领取 10 次</span>。</small>
   {% else %}
-  <h2>收到一段文字</h2>
+  <h2 class="receive-message-title">收到一段文字</h2>
   <pre>{{ text }}</pre>
   <small>文字已显示在上方，无需再输入取件码。<span class="danger-text">最多领取 10 次</span>。</small>
   {% endif %}
