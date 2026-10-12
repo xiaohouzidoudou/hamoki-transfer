@@ -4,10 +4,11 @@ import sqlite3
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 os.environ.setdefault('DATA_DIR', tempfile.mkdtemp(prefix='hamoki-import-'))
 
-from app import RATE, create_app
+from app import RATE, create_app, valid_code
 
 
 class HamokiTest(unittest.TestCase):
@@ -27,7 +28,8 @@ class HamokiTest(unittest.TestCase):
         result = self.send_text()
         self.assertEqual(result.status_code, 201)
         code = result.json['code']
-        self.assertEqual(len(code), 12)
+        self.assertEqual(len(code), 4)
+        self.assertTrue(code.isascii() and code.isdecimal())
         self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 5)
         svg = self.client.get('/api/qr/' + code)
         self.assertEqual(svg.status_code, 200)
@@ -57,7 +59,8 @@ class HamokiTest(unittest.TestCase):
         code = result.json['code']
         self.assertTrue(result.json['has_file'])
         self.assertTrue(result.json['has_text'])
-        self.assertEqual(len(code), 12)
+        self.assertEqual(len(code), 4)
+        self.assertTrue(code.isdecimal())
         lookup = self.client.get('/api/item/' + code)
         self.assertEqual(lookup.status_code, 200)
         self.assertTrue(lookup.json['has_text'])
@@ -93,7 +96,39 @@ class HamokiTest(unittest.TestCase):
     def test_public_upload_without_key(self):
         res = self.client.post('/api/send', data={'text': 'hello, public upload'})
         self.assertEqual(res.status_code, 201)
-        self.assertEqual(len(res.json['code']), 12)
+        self.assertEqual(len(res.json['code']), 4)
+
+    def test_four_digit_leading_zero_and_collision(self):
+        with patch('app.secrets.randbelow', side_effect=[7, 7, 9]):
+            first = self.send_text('first').json['code']
+            second = self.send_text('second').json['code']
+        self.assertEqual(first, '0007')
+        self.assertEqual(second, '0009')
+        self.assertEqual(self.client.post('/api/text/0007').json['text'], 'first')
+        self.assertEqual(self.client.post('/api/text/0009').json['text'], 'second')
+
+    def test_old_twelve_character_code_remains_redeemable(self):
+        legacy = 'ABCDEFGHJKLM'
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            con.execute('INSERT INTO shares VALUES (?,?,?,?,?,?,?,?)',
+                        (legacy, 'text', '临时文字.txt', 10, 'old-content',
+                         int(time.time()) + 3600, 5, int(time.time())))
+        self.assertTrue(valid_code(legacy))
+        self.assertEqual(self.client.get('/api/item/' + legacy).status_code, 200)
+        self.assertEqual(self.client.post('/api/text/' + legacy).json['text'], 'old-content')
+        self.assertEqual(self.client.get('/api/qr/' + legacy).status_code, 200)
+
+    def test_invalid_codes_are_rejected(self):
+        for code in ('001', '01234', '123A', 'ABCD', '123456789012'):
+            self.assertFalse(valid_code(code))
+
+    def test_four_digit_access_has_per_ip_rate_limit(self):
+        code = self.send_text('safe').json['code']
+        for _ in range(12):
+            self.assertEqual(self.client.get('/api/item/' + code).status_code, 200)
+        self.assertEqual(self.client.get('/api/item/' + code).status_code, 429)
+        self.assertEqual(self.client.post('/api/text/' + code).status_code, 429)
+        self.assertEqual(self.client.get('/api/qr/' + code).status_code, 429)
 
     def test_public_upload_rate_limit(self):
         for _ in range(10):
