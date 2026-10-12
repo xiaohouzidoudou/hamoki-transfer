@@ -301,6 +301,29 @@ def setup_private(app, db, files, lock, limit):
                                (device["room_id"],)).fetchall()
         return jsonify(devices=[dict(id=r["id"], label=r["label"], seen=r["seen"], me=r["id"] == device["id"]) for r in rows])
 
+    @app.post("/api/private/rename")
+    def private_rename():
+        guard()
+        device = auth()
+        payload = request.get_json(silent=True) or {}
+        target = payload.get("device_id", "")
+        new_name = payload.get("name", "")
+        if not isinstance(target, str) or len(target) != 24 or any(c not in "0123456789abcdef" for c in target):
+            abort(400, description="设备标识不正确")
+        if not isinstance(new_name, str):
+            abort(400, description="设备名称不正确")
+        new_name = new_name.strip()
+        if not new_name or len(new_name) > 24 or any(ord(c) < 32 or ord(c) == 127 for c in new_name):
+            abort(400, description="设备名称需为1至24个有效字符")
+        with lock, db() as con:
+            updated = con.execute(
+                "UPDATE private_devices SET label=? WHERE id=? AND room_id=?",
+                (new_name, target, device["room_id"])
+            )
+            if updated.rowcount != 1:
+                abort(404, description="设备不存在或不属于当前空间")
+        return jsonify(ok=True, name=new_name)
+
     @app.post("/api/private/revoke")
     def private_revoke():
         guard()
