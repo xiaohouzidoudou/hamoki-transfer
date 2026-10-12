@@ -356,6 +356,29 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('id="preview-dialog"', html)
         self.assertNotIn('4 位英数字取件码（兼容旧码）', html)
 
+    def test_unified_svg_icons_and_offline_assets(self):
+        import xml.etree.ElementTree as ElementTree
+        sprite = self.client.get('/static/icons.svg')
+        self.assertEqual(sprite.status_code, 200)
+        self.assertIn('svg', sprite.content_type)
+        root = ElementTree.fromstring(sprite.data)
+        symbols = {element.get('id') for element in root if element.tag.endswith('symbol')}
+        for required in ('upload', 'download', 'history', 'file', 'files', 'folder',
+                         'clock', 'send', 'search', 'copy', 'key', 'link', 'qr',
+                         'refresh', 'shield', 'wechat', 'qq'):
+            self.assertIn(required, symbols)
+        css = self.client.get('/static/icons.css')
+        self.assertEqual(css.status_code, 200)
+        self.assertIn(b'.ui-brand-icon', css.data)
+        page = self.client.get('/').data.decode('utf8')
+        self.assertIn('static/icons.css', page)
+        self.assertIn('static/icons.svg#wechat', page)
+        self.assertIn('static/icons.svg#qq', page)
+        self.assertIn('static/icons.svg#clock', page)
+        self.assertIn('static/icons.svg#file', page)
+        self.assertNotIn('>▤<', page)
+        self.assertNotIn('>◷<', page)
+
     def test_public_link_rejects_missing_or_invalid_token(self):
         self.assertEqual(self.client.get('/f/short').status_code, 404)
         self.assertEqual(self.client.get('/f/' + 'A' * 22).status_code, 404)
