@@ -98,7 +98,7 @@
         </section>
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
-          <div class="receive-hero"><h2>领取分享内容</h2><p>输入取件码，或通过好友分享链接直接领取</p><img src="static/hamoki-avatar.webp" alt="" width="96" height="96"></div>
+          <div class="receive-hero"><div class="receive-intro-copy"><h2>领取分享内容</h2><p>输入取件码，或通过好友分享链接直接领取</p></div><img src="static/hamoki-avatar.webp" alt="" width="96" height="96"></div>
           <input id="code-input" aria-label="取件码" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="输入取件码，例如 A5K7">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
           <div id="found" class="found" hidden>
@@ -121,6 +121,7 @@
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
+          <p class="pickup-limit"><span aria-hidden="true">♡</span> 最多领取 10 次 <span class="pickup-limit-note">· 到期后自动销毁</span></p>
           <div class="success-hero">
             <div class="hero-copy">
               <h2 class="done-title">传送成功 <span>· 专属取件码</span></h2>
@@ -159,13 +160,18 @@
             <span>分享给好友</span>
             <button id="share-wechat" type="button" aria-label="分享到微信"><span class="social-bubble" aria-hidden="true">微</span> 微信</button>
             <button id="share-qq" type="button" aria-label="分享到QQ"><span class="social-bubble qq" aria-hidden="true">Q</span> QQ</button>
+            <div id="share-guide" class="share-guide" hidden role="status" aria-live="polite">
+              <strong id="share-guide-title">分享领取链接</strong>
+              <p id="share-guide-tip">复制链接后，粘贴发送给好友。</p>
+              <div class="share-guide-link"><input id="share-guide-url" type="text" readonly aria-label="待分享的领取链接"><button id="share-copy" type="button">复制链接</button></div>
+              <button id="share-system" type="button" class="share-system" hidden>使用手机系统分享</button>
+            </div>
           </div>
           </div>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
             <button id="again" class="secondary" type="button">再传一个</button>
           </div>
-          <p class="hint final-hint">◇ 过期自动清理 · <span class="danger-text">最多领取 10 次</span></p>
         </section>
 
         <p id="message" role="status" aria-live="polite" class="message"></p>
