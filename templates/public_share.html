@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>好奇猴快传 · 领取分享内容</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:light dark}
+    body{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16px}
+    main{max-width:520px;margin:48px auto;background:#fff;border-radius:20px;padding:28px;box-shadow:0 14px 40px #18283b13}
+    h1{font-size:22px;margin:0 0 10px}p{line-height:1.65;color:#606c7b}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f7fa;border-radius:12px;padding:16px;max-height:300px;overflow:auto;color:#253040}
+    a.download{display:block;text-align:center;background:#1678e8;color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:650;margin-top:20px}
+    small{display:block;color:#8491a0;text-align:center;margin-top:20px}
+    @media(prefers-color-scheme:dark){body{background:#101116;color:#f3f5f9}main{background:#212631}p,small{color:#a6b3c0}pre{background:#151a22;color:#f1f3f7}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>🐵 好奇猴快传</h1>
+  <p>这份分享包含文件和附带的文字，点击下方按钮即可下载，无需输入取件码。</p>
+  <p><strong>{{ name }}</strong></p>
+  <pre>{{ text }}</pre>
+  <a class="download" href="{{ url_for('public_link', token=token, download=1) }}">下载文件</a>
+  <small>临时分享，过期或领取次数用尽后自动失效</small>
+</main>
+</body>
+</html>
