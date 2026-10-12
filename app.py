@@ -24,6 +24,11 @@ RATE_LOCK = threading.Lock()
 RATE = {}
 
 
+class InsufficientStorage(HTTPException):
+    code = 507
+    description = '服务器临时存储空间不足'
+
+
 def make_code():
     return ''.join(secrets.choice(ALPHABET) for _ in range(12))
 
@@ -169,7 +174,7 @@ def create_app(test_config=None):
             with LOCK, db() as con:
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
                 if kind == 'file' and used + size > app.config['TOTAL_BYTES']:
-                    abort(507, description='服务器临时存储空间不足')
+                    raise InsufficientStorage()
                 while con.execute('SELECT 1 FROM shares WHERE code=?', (code,)).fetchone():
                     code = make_code()
                 if pending:
