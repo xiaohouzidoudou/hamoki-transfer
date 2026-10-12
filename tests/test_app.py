@@ -31,11 +31,11 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(len(code), 4)
         self.assertTrue(any(c in DIGITS for c in code))
         self.assertTrue(any(c in LETTERS for c in code))
-        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 5)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 10)
         svg = self.client.get('/api/qr/' + code)
         self.assertEqual(svg.status_code, 200)
         self.assertTrue(svg.data.startswith(b'<?xml') or b'<svg' in svg.data)
-        for i in range(5):
+        for i in range(10):
             self.assertEqual(self.client.post('/api/text/' + code).json['text'], 'https://example.net')
         self.assertEqual(self.client.post('/api/text/' + code).status_code, 404)
 
@@ -47,7 +47,7 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(downloaded.status_code, 200)
         self.assertEqual(downloaded.data, b'bytes here')
         self.assertIn('attachment', downloaded.headers['Content-Disposition'])
-        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 4)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 9)
 
     def test_combined_picture_and_text_one_code(self):
         payload = b'\\x89PNG\\r\\n\\x1a\\nhello'
@@ -67,13 +67,13 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(lookup.status_code, 200)
         self.assertTrue(lookup.json['has_text'])
         self.assertTrue(lookup.json['has_file'])
-        self.assertEqual(lookup.json['remaining'], 5)
+        self.assertEqual(lookup.json['remaining'], 10)
         self.assertEqual(self.client.post('/api/text/' + code).json['text'], '这张图片请一起收取')
-        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 5)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 10)
         with self.client.get('/d/' + code) as downloaded:
             self.assertEqual(downloaded.status_code, 200)
             self.assertEqual(downloaded.data, payload)
-        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 4)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 9)
         self.assertEqual(self.client.post('/api/text/' + code).json['text'], '这张图片请一起收取')
 
     def test_text_limit_still_applies_when_image_present(self):
@@ -148,8 +148,10 @@ class HamokiTest(unittest.TestCase):
             self.assertIn('text/html', landing.content_type)
             self.assertIn('正在弹出下载，请勿操作'.encode('utf-8'), landing.data)
             self.assertIn(b'public_share.js', landing.data)
-        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 5)
-        for i in range(5):
+            self.assertIn('class="page-brand"'.encode('utf-8'), landing.data)
+            self.assertIn('最多领取 10 次'.encode('utf-8'), landing.data)
+        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 10)
+        for i in range(10):
             with self.client.get(direct_path + '?download=1') as result:
                 self.assertEqual(result.status_code, 200)
                 self.assertEqual(result.data, b'direct-link')
@@ -176,7 +178,7 @@ class HamokiTest(unittest.TestCase):
         self.assertIn(b'private note', webpage.data)
         self.assertIn('正在弹出下载，请勿操作'.encode('utf8'), webpage.data)
         self.assertIn(b'?download=1', webpage.data)
-        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 5)
+        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 10)
         with self.client.get(direct_path + '?download=1') as file:
             self.assertEqual(file.status_code, 200)
             self.assertEqual(file.data, b'test-image')
@@ -186,6 +188,8 @@ class HamokiTest(unittest.TestCase):
         self.assertEqual(page.status_code, 200)
         html = page.data.decode('utf8')
         self.assertLess(html.index('id="public-link-url"'), html.index('id="done-qr"'))
+        self.assertIn('最多领取 10 次', html)
+        self.assertIn('class="danger-text"', html)
 
     def test_public_link_rejects_missing_or_invalid_token(self):
         self.assertEqual(self.client.get('/f/short').status_code, 404)
