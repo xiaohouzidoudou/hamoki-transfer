@@ -320,7 +320,7 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('value="7d"', html)
         self.assertNotIn('1 小时</option>', html)
         self.assertIn('class="ttl-options"', html)
-        self.assertIn('id="picker-menu" hidden', html)
+        self.assertIn('id="picker-menu" data-state="closed" aria-hidden="true" inert', html)
         self.assertIn('aria-expanded="false" aria-controls="picker-menu"', html)
         self.assertIn('class="pick-chevron"', html)
         self.assertEqual(html.count('class="menu-chevron"'), 3)
