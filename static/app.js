@@ -1,6 +1,9 @@
 'use strict';
 // 好奇猴快传：原生网页交互，不依赖前端框架。
 const $ = id => document.getElementById(id);
+// 每个项目独占自己的 URL 子路径，也兼容单独部署在域名根目录。
+const appRoot = new URL('./', location.href).pathname;
+const appUrl = path => appRoot + path.replace(/^\/+/, '');
 let selectedFile = null;
 let pickupUrl = '';
 
@@ -94,7 +97,7 @@ async function readJson(response) {
 function sendForm(form) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
-    request.open('POST', '/api/send');
+    request.open('POST', appUrl('api/send'));
     request.setRequestHeader('X-Upload-Key', uploadKey);
     request.upload.onprogress = event => {
       if (!event.lengthComputable) return;
@@ -132,9 +135,9 @@ $('upload').onclick = async () => {
   flash('');
   try {
     const response = await sendForm(form);
-    pickupUrl = location.origin + '/?code=' + encodeURIComponent(response.code);
+    pickupUrl = location.origin + appRoot + '?code=' + encodeURIComponent(response.code);
     $('done-code').textContent = response.code;
-    $('done-qr').src = '/api/qr/' + encodeURIComponent(response.code);
+    $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(response.code));
     $('copy-link').textContent = '复制领取链接';
     pane('done');
   } catch (error) {
@@ -173,7 +176,7 @@ $('lookup').onclick = async () => {
   $('found').hidden = true;
   flash('正在查找…');
   try {
-    const info = await readJson(await fetch('/api/item/' + encodeURIComponent(code)));
+    const info = await readJson(await fetch(appUrl('api/item/' + encodeURIComponent(code))));
     $('found-name').textContent = info.name;
     $('found-details').textContent = info.kind === 'text'
       ? '文字内容 · 剩余 ' + info.remaining + ' 次领取'
@@ -192,11 +195,11 @@ $('lookup').onclick = async () => {
 $('claim').onclick = async () => {
   const code = $('claim').dataset.code;
   if ($('claim').dataset.kind === 'file') {
-    location.href = '/d/' + encodeURIComponent(code);
+    location.href = appUrl('d/' + encodeURIComponent(code));
     return;
   }
   try {
-    const info = await readJson(await fetch('/api/text/' + encodeURIComponent(code), { method: 'POST' }));
+    const info = await readJson(await fetch(appUrl('api/text/' + encodeURIComponent(code)), { method: 'POST' }));
     $('received-text').textContent = info.text;
     $('received-text').hidden = false;
     $('copy-text').hidden = false;
