@@ -1,0 +1,115 @@
+/* Centered public pickup: summer sunlight and after-dark forest. */
+html[data-theme="light"]{
+ color-scheme:light;
+ --pickup-bg:#effce5;--pickup-fg:#123d2b;--pickup-secondary:#687c75;
+ --pickup-panel:rgba(253,255,250,.92);--pickup-border:rgba(80,181,98,.28);
+ --pickup-field:#f4ffec;--pickup-action:#20b449;
+}
+html[data-theme="dark"]{
+ color-scheme:dark;
+ --pickup-bg:#061b12;--pickup-fg:#f1fff1;--pickup-secondary:#b0c7b7;
+ --pickup-panel:rgba(8,38,27,.91);--pickup-border:rgba(143,251,120,.4);
+ --pickup-field:#08291e;--pickup-action:#b1ff61;
+}
+body.public-share-page{
+ box-sizing:border-box;min-height:100vh;display:block;color:var(--pickup-fg);
+ padding:18px 16px 30px;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+html[data-theme="light"] body.public-share-page{
+ background:
+   radial-gradient(ellipse 170px 150px at 98% 0%,rgba(255,253,160,.95),transparent),
+   radial-gradient(ellipse 750px 400px at 50% 0%,rgba(166,233,255,.9),transparent 85%),
+   linear-gradient(175deg,#ddf7ec,#f5ffed 47%,#d1f1ac);
+}
+html[data-theme="dark"] body.public-share-page{
+ background:
+   radial-gradient(ellipse 300px 190px at 93% 0%,rgba(177,255,63,.2),transparent),
+   radial-gradient(ellipse 480px 330px at 20% 0%,rgba(22,110,57,.3),transparent),
+   linear-gradient(155deg,#03170f,#062116 64%,#03150b);
+}
+.public-share-page::before,.public-share-page::after{
+ content:"";position:fixed;pointer-events:none;z-index:0;display:block;
+ width:min(43vw,340px);height:min(35vw,260px);
+ background:url("jungle-foliage.svg") center/contain no-repeat;
+ opacity:.34;
+}
+.public-share-page::before{top:-55px;left:-100px;transform:rotate(157deg)}
+.public-share-page::after{bottom:-50px;right:-75px}
+.public-share-page main{
+ position:relative;z-index:1;max-width:580px;margin:24px auto 32px;
+ padding:26px 29px 27px;text-align:center;
+ background:var(--pickup-panel);border:1px solid var(--pickup-border);
+ border-radius:29px;box-shadow:0 18px 44px rgba(22,91,40,.14);
+ color:var(--pickup-fg);
+}
+.public-share-page .public-hero{text-align:center;display:flex;align-items:center;flex-direction:column;gap:0;padding:0 0 15px}
+.public-share-page .public-brand{
+ display:flex;align-items:center;justify-content:center;text-align:left;gap:12px;
+ margin:0 0 18px;font-size:19px;font-weight:870;color:var(--pickup-fg);
+}
+.public-share-page .public-brand img{width:53px;height:53px;border-radius:15px;border:2px solid #65d34f}
+.public-share-page .public-brand strong{color:var(--pickup-action)}
+.public-share-page .public-brand small{color:var(--pickup-secondary);font-size:10px}
+.public-share-page .page-brand{
+ margin:0;text-align:center;font-size:clamp(27px,7vw,39px);
+ line-height:1.3;color:var(--pickup-fg);font-weight:880;letter-spacing:-1px;
+ position:relative;
+}
+.public-share-page .page-brand span{color:var(--pickup-action)}
+.public-share-page .page-brand::after{
+ content:"";display:block;margin:3px auto 0;width:90%;height:6px;
+ background:linear-gradient(90deg,#85e931,#b6fe69,#38d340);
+ border-radius:100%;transform:rotate(-1deg);
+}
+.public-share-page .public-intro{color:var(--pickup-secondary);font-size:12px;line-height:1.6;text-align:center;margin:14px auto 10px}
+.public-share-page .pickup-mascot{
+ width:clamp(108px,31vw,148px);height:clamp(108px,31vw,148px);
+ border:2px solid rgba(124,221,83,.59);border-radius:27px;object-fit:cover;
+ box-shadow:0 9px 22px rgba(39,137,53,.19);margin:0 auto 15px;
+ transform:rotate(-2deg);
+}
+.public-share-page .expiry-countdown{
+ display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+ gap:9px;margin:0 auto 14px;padding:10px 16px;border-radius:100px;
+ background:var(--pickup-field);border:1px solid var(--pickup-border);
+ color:var(--pickup-fg);font-size:12px;text-align:center;
+}
+.public-share-page .expiry-countdown span{color:var(--pickup-secondary);font-weight:690}
+.public-share-page .expiry-countdown strong{font-size:clamp(15px,5vw,21px);font-variant-numeric:tabular-nums;color:var(--pickup-action)}
+.public-share-page .expiry-countdown.expired strong{color:#de593a}
+.public-share-page .download-state,.public-share-page .pickup-card{
+ background:var(--pickup-field);border:1px solid var(--pickup-border);
+ border-radius:19px;padding:22px 17px;margin:2px 0 17px;color:var(--pickup-fg);
+}
+.public-share-page .download-state strong{display:block;color:var(--pickup-fg);font-size:17px}
+.public-share-page .download-state p{color:var(--pickup-secondary);font-size:12px}
+.public-share-page .loading-ring{border-color:rgba(97,213,97,.23);border-top-color:#36c34e}
+.public-share-page .shared-file,.public-share-page .shared-note-label{color:var(--pickup-secondary);text-align:center}
+.public-share-page .shared-file strong{color:var(--pickup-fg)}
+.public-share-page .download,
+.public-share-page a.download{
+ display:block;text-align:center;max-width:100%;margin:13px auto;
+ padding:14px 16px;border-radius:16px;
+ background:linear-gradient(110deg,#b6fe66,#39d44c,#15a34c);
+ box-shadow:0 8px 20px rgba(40,161,55,.16);
+ font-size:14px;font-weight:800;color:#113b24;
+}
+.public-share-page .receive-message-title{color:var(--pickup-fg);font-size:19px}
+.public-share-page pre{
+ white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;
+ color:var(--pickup-fg);background:var(--pickup-field);
+ border:1px solid var(--pickup-border);border-radius:15px;padding:16px;
+ max-height:420px;overflow:auto;
+}
+.public-share-page small{color:var(--pickup-secondary);line-height:1.6}
+.public-share-page .danger-text{color:var(--pickup-action);font-weight:800}
+@media(max-width:520px){
+ body.public-share-page{padding:10px 12px 20px}
+ .public-share-page main{margin:12px auto 20px;padding:21px 15px 23px;border-radius:22px}
+ .public-share-page .public-brand{margin-bottom:15px}
+ .public-share-page .public-brand img{width:46px;height:46px}
+ .public-share-page .page-brand{font-size:clamp(26px,8vw,34px)}
+ .public-share-page .pickup-mascot{width:115px;height:115px;border-radius:23px}
+ .public-share-page .expiry-countdown{margin-bottom:7px}
+ .public-share-page::before,.public-share-page::after{width:190px;height:150px}
+}
