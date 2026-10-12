@@ -6,7 +6,6 @@ services:
     ports:
       - "127.0.0.1:8018:8000"
     environment:
-      UPLOAD_SECRET: ${UPLOAD_SECRET:?set UPLOAD_SECRET in .env}
       PUBLIC_URL: ${PUBLIC_URL:-}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-250}
       TOTAL_LIMIT_MB: ${TOTAL_LIMIT_MB:-4096}
