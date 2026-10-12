@@ -19,7 +19,6 @@
       <span class="brand-name">好奇猴<span>快传</span></span>
     </a>
     <div class="header-actions">
-      <span class="header-note"><span class="live-dot"></span> 简单、轻快、随时传</span>
       <label class="theme-switch" for="theme-mode">
         <span class="theme-caption">外观</span>
         <select id="theme-mode" aria-label="切换网页外观">
@@ -32,12 +31,6 @@
   </header>
 
   <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="eyebrow"><span class="eyebrow-dot"></span> 不用安装 · 不用注册 · 随时传送</div>
-      <h1 id="hero-title">传文件，<span>就这么简单。</span></h1>
-      <p>从电脑到手机，从这一端到另一端。<br class="desktop-break">上传、扫码、领取，三步搞定。</p>
-    </section>
-
     <div class="workspace">
       <div class="card">
         <div class="tabs" role="tablist" aria-label="文件传递">
@@ -52,21 +45,23 @@
         </div>
 
         <section id="pane-send" class="pane" role="tabpanel" aria-labelledby="tab-send">
-          <div id="drop" class="drop" tabindex="0" role="button" aria-label="点击或拖入文件上传">
-            <div class="upload-illustration" aria-hidden="true">
-              <svg viewBox="0 0 48 48"><rect x="10" y="14" width="28" height="29" rx="6"/><path d="M24 31V9m0 0-8 8m8-8 8 8"/></svg>
-            </div>
-            <h2>轻轻一放，即刻传送</h2>
-            <p>拖拽文件到这里，或点击下方选择</p>
-            <button id="pick" class="secondary file-pick" type="button">选择文件 <span aria-hidden="true">↗</span></button>
+          <div id="drop" class="file-select">
+            <button id="pick" class="file-pick" type="button">
+              <span class="file-symbol" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              </span>
+              <span>选择文件</span>
+              <span class="pick-arrow" aria-hidden="true">＋</span>
+            </button>
             <input type="file" id="file" hidden>
-            <div id="file-info" class="file-info" role="status"></div>
-            <button id="clear-file" class="clear-file" type="button" hidden>移除文件</button>
+            <div class="selected-file" id="selected-file" hidden>
+              <span id="file-info" class="file-info" role="status"></span>
+              <button id="clear-file" class="clear-file" type="button" hidden>移除</button>
+            </div>
           </div>
 
-          <div class="separator"><span>也可以直接传文字</span></div>
-          <label class="visually-hidden" for="text">要传送的文字</label>
-          <textarea id="text" rows="3" maxlength="65536" placeholder="粘贴链接、文字或者一段临时备忘…"></textarea>
+          <label class="text-label" for="text">或者传一段文字</label>
+          <textarea id="text" rows="2" maxlength="65536" placeholder="粘贴文字、链接或备忘…"></textarea>
 
           <div class="row">
             <div class="row-label"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> 文件保留时间</div>
@@ -79,15 +74,11 @@
           </div>
 
           <button class="primary full" type="button" id="upload">生成取件码 <span aria-hidden="true">→</span></button>
-          <p class="hint" id="send-tip">上传需使用你的私密链接，领取无需登录。</p>
+          <p class="hint" id="send-tip">仅持私密链接可上传 · 取件无需登录</p>
         </section>
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
-          <div class="receive-icon" aria-hidden="true">
-            <svg viewBox="0 0 36 36"><rect x="7" y="7" width="22" height="22" rx="6"/><path d="M12 14h4v4h-4zm8 0h4v4h-4zm-8 8h4v4h-4zm8 0v4h4"/></svg>
-          </div>
           <h2>输入取件码</h2>
-          <p class="muted">拿到取件码，即可领取对方分享的内容。</p>
           <label class="fieldlabel" for="code-input">12 位取件码</label>
           <input id="code-input" maxlength="16" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A3BC5D7EF9GH">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
@@ -124,14 +115,9 @@
         <p id="message" role="status" aria-live="polite" class="message"></p>
       </div>
 
-      <div class="benefits" aria-label="好奇猴快传的特点">
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zm3 15h4"/></svg> 手机电脑都能用</span>
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg> 到期自动清理</span>
-        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16M7 5h10M4 13h16M7 17h10"/></svg> 无需安装软件</span>
-      </div>
     </div>
   </main>
-  <footer><span>© 好奇猴快传</span><span>简单传递，每一次都轻松。</span><a href="https://github.com/xiaohouzidoudou/hamoki-transfer" target="_blank" rel="noopener noreferrer">开源项目 ↗</a></footer>
+  <footer><span>© 好奇猴快传</span><a href="https://github.com/xiaohouzidoudou/hamoki-transfer" target="_blank" rel="noopener noreferrer">开源项目 ↗</a></footer>
 </div>
 </body>
 </html>
