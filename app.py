@@ -94,7 +94,7 @@ def create_app(test_config=None):
     def require_upload_key():
         key = request.headers.get('X-Upload-Key', '')
         if not hmac.compare_digest(key, app.config['UPLOAD_SECRET']):
-            abort(403, description='Upload access denied')
+            abort(403, description='没有上传权限，请使用私密上传链接')
 
     def limit(action, count, window=60):
         address = request.remote_addr or 'unknown'
@@ -106,7 +106,7 @@ def create_app(test_config=None):
                 RATE.clear()
             entries = [t for t in RATE.get(k, ()) if now - t < window]
             if len(entries) >= count:
-                abort(429, description='Too many requests')
+                abort(429, description='操作过于频繁，请稍后重试')
             entries.append(now)
             RATE[k] = entries
 
@@ -143,11 +143,11 @@ def create_app(test_config=None):
         require_upload_key()
         ttl = request.form.get('ttl', '24h')
         if ttl not in TTL:
-            abort(400, description='Invalid expiration')
+            abort(400, description='保存时间不正确')
         uploaded = request.files.get('file')
         body = request.form.get('text', '')
         if bool(uploaded and uploaded.filename) == bool(body.strip()):
-            abort(400, description='Choose one file or some text')
+            abort(400, description='请选择一个文件或输入一段文字')
         now = int(time.time())
         code = make_code()
         kind = 'file' if uploaded and uploaded.filename else 'text'
@@ -155,28 +155,28 @@ def create_app(test_config=None):
         if kind == 'file':
             name = uploaded.filename.replace('\\', '/').split('/')[-1].strip()[:200]
             if not name:
-                abort(400, description='Invalid filename')
+                abort(400, description='文件名不正确')
             pending = files / ('.' + secrets.token_hex(16) + '.upload')
             try:
                 uploaded.save(pending)
                 size = pending.stat().st_size
                 if size == 0:
-                    abort(400, description='Empty file')
+                    abort(400, description='不能上传空文件')
             except Exception:
                 pending.unlink(missing_ok=True)
                 raise
             body = None
         else:
-            name = 'Message.txt'
+            name = '临时文字.txt'
             body = body.strip()
             size = len(body.encode('utf-8'))
             if not 0 < size <= 65536:
-                abort(400, description='Text must be 1-65536 bytes')
+                abort(400, description='文字长度须在 1 至 65536 字节之间')
         try:
             with LOCK, db() as con:
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
                 if kind == 'file' and used + size > app.config['TOTAL_BYTES']:
-                    abort(507, description='Storage quota reached')
+                    abort(507, description='服务器临时存储空间不足')
                 while con.execute('SELECT 1 FROM shares WHERE code=?', (code,)).fetchone():
                     code = make_code()
                 if pending:
@@ -189,11 +189,11 @@ def create_app(test_config=None):
 
     def lookup_share(code):
         if len(code) != 12 or any(c not in ALPHABET for c in code):
-            abort(404, description='Not found')
+            abort(404, description='取件码不存在')
         with db() as con:
             row = con.execute('SELECT * FROM shares WHERE code=? AND expires > ? AND remaining > 0', (code, int(time.time()))).fetchone()
         if row is None:
-            abort(404, description='Not found or expired')
+            abort(404, description='取件码不存在或已过期')
         return row
 
     @app.get('/api/item/<code>')
@@ -206,7 +206,7 @@ def create_app(test_config=None):
         with LOCK, db() as con:
             row = con.execute('SELECT * FROM shares WHERE code=? AND kind=? AND expires > ? AND remaining > 0', (code, expected_kind, int(time.time()))).fetchone()
             if row is None:
-                abort(404, description='Not found or expired')
+                abort(404, description='取件码不存在或已过期')
             con.execute('UPDATE shares SET remaining=remaining-1 WHERE code=?', (code,))
             return row
 
@@ -222,7 +222,7 @@ def create_app(test_config=None):
         row = consume(code.upper(), 'file')
         path = files / row['code']
         if not path.is_file():
-            abort(404, description='File missing')
+            abort(404, description='文件不存在或已被删除')
         return send_file(path, mimetype='application/octet-stream', as_attachment=True, download_name=row['name'], max_age=0)
 
     @app.get('/api/qr/<code>')
