@@ -14,9 +14,9 @@
   <link rel="stylesheet" href="static/motion.css">
   <link rel="stylesheet" href="static/icons.css">
   <script src="static/countdown.js" defer></script>
-  <script src="static/app.js" defer></script>
+  <script src="static/app.js?v=20261013-quota-1" defer></script>
   <script src="static/private.js?v=20261012-drag-1" defer></script>
-  <link rel="stylesheet" href="static/private.css?v=20261012-drag-1">
+  <link rel="stylesheet" href="static/private.css?v=20261013-quota-1">
 </head>
 <body>
 <div class="page-glow" aria-hidden="true"></div>
@@ -120,6 +120,14 @@
           </div>
 
           <button class="primary full" type="button" id="upload"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#send"></use></svg> 立即传送</button>
+          <div id="guest-quota-panel" class="guest-quota-panel">
+            <span id="guest-quota-text">普通访客每24小时最多上传1GB。</span>
+            <button type="button" id="guest-unlock-toggle" class="private-text-button">输入上传口令</button>
+          </div>
+          <div id="guest-unlock-panel" class="guest-unlock-panel" hidden>
+            <label for="guest-upload-password">继续上传的口令</label>
+            <div class="guest-unlock-row"><input type="password" id="guest-upload-password" autocomplete="off" placeholder="输入上传口令"><button type="button" id="guest-unlock-submit" class="secondary">验证口令</button></div>
+          </div>
           <p class="hint" id="send-tip">✦ 默认 3 天后自动销毁 · 无需登录</p>
         </section>
 

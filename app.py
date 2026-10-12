@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import io
+import hashlib
+import hmac
 import mimetypes
 import zipfile
 import os
@@ -18,6 +20,7 @@ from qrcode.image.svg import SvgPathImage
 from flask import Flask, abort, jsonify, render_template, request, send_file
 from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
+from itsdangerous import TimestampSigner, BadSignature, SignatureExpired
 from private_channel import setup_private
 
 # Minimal container images may lack system MIME mappings for WebP avatars.
@@ -63,7 +66,9 @@ def create_app(test_config=None):
         DATA_DIR=os.environ.get('DATA_DIR', '/data'),
         PUBLIC_URL=os.environ.get('PUBLIC_URL', ''),
         MAX_UPLOAD_MB=int(os.environ.get('MAX_UPLOAD_MB', '5120')),
-        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '15360')) * 1024 * 1024,
+        TOTAL_BYTES=int(os.environ.get('TOTAL_LIMIT_MB', '10240')) * 1024 * 1024,
+        GUEST_DAILY_BYTES=int(os.environ.get('GUEST_DAILY_MB', '1024')) * 1024 * 1024,
+        UPLOAD_UNLOCK_PASSWORD=os.environ.get('UPLOAD_UNLOCK_PASSWORD', ''),
         CLEANUP_INTERVAL_SECONDS=int(os.environ.get('CLEANUP_INTERVAL_SECONDS', '300')), 
         TESTING=False,
     )
@@ -102,6 +107,14 @@ def create_app(test_config=None):
             created INTEGER NOT NULL
         )''')
         con.execute('CREATE INDEX IF NOT EXISTS idx_shares_expires ON shares(expires)')
+        con.execute('''CREATE TABLE IF NOT EXISTS guest_uploads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_hash TEXT NOT NULL,
+            created INTEGER NOT NULL,
+            bytes INTEGER NOT NULL CHECK(bytes >= 0)
+        )''')
+        con.execute('CREATE INDEX IF NOT EXISTS idx_guest_uploads_ip_time ON guest_uploads(ip_hash, created)')
+
         # Separate capability URLs: short manual codes and long direct links.
         # Keeps the existing shares schema and old pickup codes untouched.
         con.execute('''CREATE TABLE IF NOT EXISTS public_links (
@@ -118,6 +131,7 @@ def create_app(test_config=None):
                     (files / row['code']).unlink(missing_ok=True)
             con.execute('DELETE FROM shares WHERE expires <= ?', (now,))
             con.execute('DELETE FROM public_links WHERE code NOT IN (SELECT code FROM shares)')
+            con.execute('DELETE FROM guest_uploads WHERE created <= ?', (now - 86400,))
 
     def clean_loop():
         interval = max(1, app.config['CLEANUP_INTERVAL_SECONDS'])
@@ -147,6 +161,80 @@ def create_app(test_config=None):
                 abort(429, description='操作过于频繁，请稍后重试')
             entries.append(now)
             RATE[k] = entries
+
+    # Upload unlock uses a signed, expiring browser cookie. The password itself
+    # lives ONLY in the instance environment, never in source code or cookies.
+    unlock_secret_path = root / '.upload-access-secret'
+    try:
+        upload_key = unlock_secret_path.read_bytes()
+    except FileNotFoundError:
+        try:
+            fd = os.open(unlock_secret_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, 'wb') as output:
+                output.write(secrets.token_bytes(32))
+        except FileExistsError:
+            pass
+        upload_key = unlock_secret_path.read_bytes()
+    if len(upload_key) != 32:
+        raise RuntimeError('invalid upload-access secret')
+    upload_signer = TimestampSigner(upload_key, salt='hamoki-public-upload-v1')
+    unlock_cookie = 'hamoki_upload_unlocked'
+
+    def upload_unlocked():
+        if not app.config['UPLOAD_UNLOCK_PASSWORD']:
+            return False
+        token = request.cookies.get(unlock_cookie, '')
+        try:
+            return upload_signer.unsign(token, max_age=86400) == b'unlocked'
+        except (BadSignature, SignatureExpired):
+            return False
+
+    def guest_ip_hash():
+        # Hash the visitor IP so the SQLite ledger does not store raw addresses.
+        ip = request.remote_addr or 'unknown'
+        return hmac.new(upload_key, ip.encode('utf-8'), hashlib.sha256).hexdigest()
+
+    def guest_used(con, now, ip_hash):
+        return con.execute(
+            'SELECT COALESCE(SUM(bytes),0) FROM guest_uploads WHERE ip_hash=? AND created>?',
+            (ip_hash, now - 86400)
+        ).fetchone()[0]
+
+    def guest_quota_error(used):
+        return jsonify(
+            error='今日访客上传额度已用完，请输入上传口令继续上传',
+            code='guest_quota_exceeded',
+            limit_bytes=app.config['GUEST_DAILY_BYTES'],
+            used_bytes=used
+        ), 429
+
+    @app.get('/api/upload/quota')
+    def public_upload_quota():
+        now = int(time.time())
+        with db() as con:
+            used = guest_used(con, now, guest_ip_hash())
+        return jsonify(unlocked=upload_unlocked(),
+                       used_bytes=used,
+                       limit_bytes=app.config['GUEST_DAILY_BYTES'],
+                       remaining_bytes=max(0, app.config['GUEST_DAILY_BYTES'] - used))
+
+    @app.post('/api/upload/unlock')
+    def public_upload_unlock():
+        limit('upload-unlock', 5, 3600)
+        if request.headers.get('X-Hamoki-Client') != '1':
+            abort(403, description='无效的请求来源')
+        origin = request.headers.get('Origin')
+        if origin and origin.rstrip('/') != request.host_url.rstrip('/'):
+            abort(403, description='无效的请求来源')
+        provided = (request.get_json(silent=True) or {}).get('password', '')
+        configured = app.config['UPLOAD_UNLOCK_PASSWORD']
+        if not isinstance(provided, str) or len(provided) > 128 or not configured or not hmac.compare_digest(provided, configured):
+            abort(403, description='上传口令不正确')
+        resp = jsonify(ok=True)
+        resp.set_cookie(unlock_cookie, upload_signer.sign(b'unlocked').decode('ascii'),
+                        max_age=86400, httponly=True, secure=not app.config['TESTING'],
+                        samesite='Strict', path='/')
+        return resp
 
     @app.after_request
     def set_headers(resp):
@@ -180,6 +268,16 @@ def create_app(test_config=None):
     @app.post('/api/send')
     def upload():
         limit('upload', 10)
+        now = int(time.time())
+        guest_bypass = upload_unlocked()
+        visitor_hash = guest_ip_hash() if not guest_bypass else ''
+        if not guest_bypass and request.content_length is not None:
+            # Fast reject clearly oversized guest requests before parsing uploads.
+            with db() as con:
+                already_used = guest_used(con, now, visitor_hash)
+            remaining = max(0, app.config['GUEST_DAILY_BYTES'] - already_used)
+            if request.content_length > remaining + 2 * 1024 * 1024:
+                return guest_quota_error(already_used)
         ttl = request.form.get('ttl', '3d')
         if ttl not in TTL:
             abort(400, description='保存时间不正确')
@@ -196,7 +294,6 @@ def create_app(test_config=None):
         text_bytes = len(body.encode('utf-8'))
         if text_bytes > 65536:
             abort(400, description='文字长度不能超过 65536 字节')
-        now = int(time.time())
         code = make_code()
         kind = 'file' if has_file else 'text'
         pending = None
@@ -260,8 +357,13 @@ def create_app(test_config=None):
         try:
             with LOCK, db() as con:
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
-                if kind == 'file' and used + size > app.config['TOTAL_BYTES']:
+                private_used = con.execute("SELECT COALESCE(SUM(size),0) FROM private_rooms WHERE filekey != ''").fetchone()[0]
+                if kind == 'file' and used + private_used + size > app.config['TOTAL_BYTES']:
                     raise InsufficientStorage()
+                if not guest_bypass:
+                    already_used = guest_used(con, now, visitor_hash)
+                    if already_used + size > app.config['GUEST_DAILY_BYTES']:
+                        return guest_quota_error(already_used)
                 for _ in range(150):
                     if not con.execute('SELECT 1 FROM shares WHERE code=?', (code,)).fetchone():
                         break
@@ -279,6 +381,8 @@ def create_app(test_config=None):
                 else:
                     abort(503, description='生成分享链接失败，请重试')
                 con.execute('INSERT INTO public_links (token, code) VALUES (?, ?)', (token, code))
+                if not guest_bypass:
+                    con.execute('INSERT INTO guest_uploads (ip_hash, created, bytes) VALUES (?,?,?)', (visitor_hash, now, size))
         finally:
             if pending:
                 pending.unlink(missing_ok=True)

@@ -171,6 +171,7 @@ function pane(name) {
   }
   activePane = name;
   if (name === 'history') renderHistory();
+  if (name === 'send') refreshGuestQuota();
   if (name === 'private') window.hamokiPrivateOpen?.();
   flash('');
 }
@@ -271,6 +272,47 @@ async function readJson(response) {
   if (!response.ok) throw Error(body.error || '操作失败，请稍后重试');
   return body;
 }
+const guestQuota={unlocked:false,remaining_bytes:1024*1024*1024,limit_bytes:1024*1024*1024};
+function fmtGuestBytes(bytes){return (Math.max(0,bytes)/1024/1024/1024).toFixed(2)+' GB';}
+async function refreshGuestQuota(){
+  try{
+    const status=await readJson(await fetch(appUrl('api/upload/quota'),{cache:'no-store'}));
+    Object.assign(guestQuota,status);
+    $('guest-quota-text').textContent=status.unlocked
+      ? '已验证上传口令，24小时内上传不受访客每日额度限制（仍受服务器空间限制）'
+      : '普通访客每24小时可上传1GB，今日剩余 '+fmtGuestBytes(status.remaining_bytes);
+    $('guest-unlock-toggle').hidden=status.unlocked;
+    if(status.unlocked)$('guest-unlock-panel').hidden=true;
+  }catch{
+    $('guest-quota-text').textContent='普通访客每日最多上传1GB；需要更多额度可输入上传口令';
+  }
+}
+function revealGuestUnlock(){
+  $('guest-unlock-panel').hidden=false;
+  $('guest-upload-password').focus();
+}
+$('guest-unlock-toggle').onclick=revealGuestUnlock;
+$('guest-unlock-submit').onclick=async()=>{
+  const password=$('guest-upload-password').value;
+  if(!password)return flash('请输入上传口令');
+  $('guest-unlock-submit').disabled=true;
+  try{
+    const response=await fetch(appUrl('api/upload/unlock'),{
+      method:'POST',credentials:'same-origin',
+      headers:{'Content-Type':'application/json','X-Hamoki-Client':'1'},
+      body:JSON.stringify({password})
+    });
+    await readJson(response);
+    $('guest-upload-password').value='';
+    $('guest-unlock-panel').hidden=true;
+    flash('验证成功，可以继续上传');
+    await refreshGuestQuota();
+  }catch(error){flash(error.message)}
+  finally{$('guest-unlock-submit').disabled=false}
+};
+$('guest-upload-password').addEventListener('keydown',event=>{
+  if(event.key==='Enter')$('guest-unlock-submit').click();
+});
 function sendForm(form) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
@@ -287,7 +329,9 @@ function sendForm(form) {
       try { body = JSON.parse(request.responseText); }
       catch { reject(Error('服务器响应异常，请稍后重试')); return; }
       if (request.status < 200 || request.status >= 300) {
-        reject(Error(body.error || '上传失败，请重试'));
+        const problem=Error(body.error || '上传失败，请重试');
+        problem.code=body.code;
+        reject(problem);
       } else {
         resolve(body);
       }
@@ -299,6 +343,11 @@ $('upload').onclick = async () => {
   const text = $('text').value.trim();
   if (!selectedFiles.length && !text) { flash('请先选择文件，或输入一段文字。'); return; }
   if (selectedFiles.reduce((sum, file) => sum + file.size, 0) > MAX_FILE_BYTES) { flash('文件总大小不能超过 5 GB'); return; }
+  if (!guestQuota.unlocked && selectedFiles.reduce((sum,file)=>sum+file.size,0)+new TextEncoder().encode(text).length>guestQuota.remaining_bytes){
+    revealGuestUnlock();
+    flash('今日访客剩余额度不足，请输入上传口令继续');
+    return;
+  }
   const form = new FormData();
   form.append('ttl', document.querySelector('input[name="ttl"]:checked')?.value || '3d');
   form.append('selection', selectedMode);
@@ -314,6 +363,7 @@ $('upload').onclick = async () => {
   flash('');
   try {
     const response = await sendForm(form);
+    refreshGuestQuota();
     rememberSent({
       code: response.code, name: response.name, has_file: response.has_file,
       has_text: response.has_text, created: response.created, public_path: response.public_path,
@@ -321,6 +371,10 @@ $('upload').onclick = async () => {
     });
     displayDone(response);
   } catch (error) {
+    if (error.code === 'guest_quota_exceeded'){
+      refreshGuestQuota();
+      revealGuestUnlock();
+    }
     flash(error.message);
   } finally {
     button.disabled = false;
@@ -461,6 +515,7 @@ $('copy-text').onclick = () => copyText($('received-text').textContent, $('copy-
 $('code-input').addEventListener('keydown', event => {
   if (event.key === 'Enter') $('lookup').click();
 });
+refreshGuestQuota();
 const incoming = new URLSearchParams(location.search).get('code');
 if (incoming) {
   pane('get');
