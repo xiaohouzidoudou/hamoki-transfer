@@ -11,7 +11,7 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import qrcode
 from qrcode.image.svg import SvgPathImage
@@ -71,7 +71,7 @@ def create_app(test_config=None):
     app.config['MAX_FILE_BYTES'] = int(app.config['MAX_UPLOAD_MB']) * 1024 * 1024
     app.config['MAX_CONTENT_LENGTH'] = app.config['MAX_FILE_BYTES'] + 2 * 1024 * 1024
     # Only our loopback-bound reverse proxy is trusted to append the client IP.
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     root = Path(app.config['DATA_DIR']).resolve()
     files = root / 'files'
@@ -415,7 +415,13 @@ def create_app(test_config=None):
     def qr(code):
         limit_short_code_access(code)
         lookup_share(code.upper())
-        base = app.config['PUBLIC_URL'].rstrip('/') or request.url_root.rstrip('/')
+        # Keep the original configured preview base for that hostname, but
+        # generate links from the current trusted proxy hostname on a new domain.
+        # This avoids leaking the preview subpath into dedicated deployments.
+        configured = app.config['PUBLIC_URL'].rstrip('/')
+        base = (configured if configured and
+                urlsplit(configured).netloc.lower() == request.host.lower()
+                else request.url_root.rstrip('/'))
         url = base + '/?code=' + quote(code.upper(), safe='')
         svg = qrcode.make(url, image_factory=SvgPathImage)
         data = io.BytesIO()
