@@ -43,6 +43,31 @@ class PairedTransferTests(unittest.TestCase):
         self.assertEqual(self.pc.post('/api/private/revoke',json={'device_id':other},headers=self.headers).status_code,200)
         self.assertEqual(self.phone.get('/api/private/latest').status_code,401)
 
+    def test_invite_view_and_reissue_preserve_devices(self):
+        result = self.pc.post('/api/private/create', json={'label':'PC'}, headers=self.headers)
+        original = result.json['invite']
+        self.assertEqual(self.pc.get('/api/private/invite').json['invite'], original)
+        self.assertEqual(self.phone.post('/api/private/join', json={'invite':original, 'label':'Phone'},headers=self.headers).status_code, 200)
+        fresh = self.phone.post('/api/private/invite/reissue', json={},headers=self.headers).json['invite']
+        self.assertNotEqual(original, fresh)
+        self.assertEqual(self.pc.get('/api/private/invite').json['invite'], fresh)
+        self.assertTrue(self.phone.get('/api/private/me').json['paired'])
+        self.assertTrue(self.pc.get('/api/private/me').json['paired'])
+        self.assertEqual(self.app.test_client().post('/api/private/join',json={'invite':original},headers=self.headers).status_code,403)
+        self.assertEqual(self.app.test_client().post('/api/private/join',json={'invite':fresh},headers=self.headers).status_code,200)
+
+    def test_legacy_room_can_reissue(self):
+        result = self.pc.post('/api/private/create', json={'label':'PC'}, headers=self.headers)
+        with self.app.app_context():
+            import sqlite3
+            con=sqlite3.connect(str(Path(self.tmp.name)/'index.sqlite3'))
+            con.execute("UPDATE private_rooms SET invite_nonce=''")
+            con.commit()
+            con.close()
+        self.assertTrue(self.pc.get('/api/private/invite').json['needs_reissue'])
+        self.assertEqual(self.pc.post('/api/private/invite/reissue',json={},headers=self.headers).status_code,200)
+        self.assertTrue(self.pc.get('/api/private/invite').json['available'])
+
     def test_reject_unpaired_and_csrf(self):
         self.assertEqual(self.phone.get('/api/private/latest').status_code,401)
         self.assertEqual(self.pc.post('/api/private/create',json={'label':'PC'}).status_code,403)

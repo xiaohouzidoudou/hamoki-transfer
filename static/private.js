@@ -40,11 +40,41 @@ el('private-send').onclick=async()=>{
 };
 el('private-settings-toggle').onclick=async()=>{
  el('private-settings').hidden=false;
- try{const d=await json(await api('devices'));el('private-device-list').replaceChildren();
+ try{await loadInvite();const d=await json(await api('devices'));el('private-device-list').replaceChildren();
  for(const row of d.devices){const line=document.createElement('div');line.className='private-device';
  const label=document.createElement('span');label.textContent=row.label+(row.me?'（本机）':'');line.append(label);
  if(!row.me){const btn=document.createElement('button');btn.className='secondary';btn.textContent='解绑';btn.onclick=()=>revoke(row.id);line.append(btn)}
  el('private-device-list').append(line)}}catch(e){message(e.message)}
+};
+async function loadInvite(){
+ const data=await json(await api('invite'));
+ if(data.available){
+  el('private-invite-display').textContent=data.invite;
+  el('private-invite-copy').hidden=false;
+  el('private-invite-show').hidden=true;
+  el('private-invite-notice').textContent='只有配对过的设备才能查看。';
+ }else{
+  el('private-invite-notice').textContent='旧版配对码只保存了校验值，无法恢复原文。点击下方按钮生成新的长期配对码；已绑定设备不会退出。';
+  el('private-invite-show').textContent='生成新配对码';
+  el('private-invite-show').hidden=false;
+ }
+}
+el('private-invite-show').onclick=async()=>{
+ try{
+  const data=await json(await api('invite'));
+  if(!data.available){
+   if(!confirm('旧配对码将失效，但已有设备保持绑定。确定生成新配对码吗？'))return;
+   const updated=await json(await mutation('invite/reissue',{}));
+   el('private-invite-display').textContent=updated.invite;
+   el('private-invite-copy').hidden=false;
+   el('private-invite-show').hidden=true;
+   el('private-invite-notice').textContent='新配对码已生效，原配对码失效。';
+  }else await loadInvite();
+ }catch(e){message(e.message)}
+};
+el('private-invite-copy').onclick=async()=>{
+ try{await navigator.clipboard.writeText(el('private-invite-display').textContent);message('配对码已复制')}
+ catch{message('复制失败，请手动选中配对码')}
 };
 el('private-settings-close').onclick=()=>el('private-settings').hidden=true;
 async function revoke(id){if(!confirm('确定解除这个设备的绑定？'))return;try{await json(await mutation('revoke',{device_id:id}));await boot();el('private-settings-toggle').click()}catch(e){message(e.message)}}
