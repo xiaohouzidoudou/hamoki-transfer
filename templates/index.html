@@ -83,8 +83,8 @@
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
           <h2>输入取件码</h2>
-          <label class="fieldlabel" for="code-input">4 位数字取件码（旧版 12 位也能用）</label>
-          <input id="code-input" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：0427">
+          <label class="fieldlabel" for="code-input">4 位英数字取件码（兼容旧码）</label>
+          <input id="code-input" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如：A5K7">
           <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
           <div id="found" class="found" hidden>
             <div class="file-line">
@@ -117,6 +117,12 @@
             </button>
           </div>
           <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>打开手机相机扫码领取</span></div>
+          <div class="public-link-panel">
+            <span class="public-link-label">公共链接</span>
+            <a id="public-link-url" class="public-link-url" href="#" target="_blank" rel="noopener noreferrer"></a>
+            <button id="copy-public-link" class="public-link-copy" type="button">复制</button>
+          </div>
+          <p id="public-link-tip" class="hint">复制给别人即可直接查看或下载，无需输入取件码。</p>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
             <button id="again" class="secondary" type="button">再传一个</button>
