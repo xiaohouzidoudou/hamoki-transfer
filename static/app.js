@@ -61,6 +61,10 @@ function displayDone(item) {
   }
   $('done-qr').src = appUrl('api/qr/' + encodeURIComponent(item.code));
   $('copy-link').textContent = '复制领取链接';
+  $('share-guide').hidden = true;
+  $('share-guide-url').value = publicUrl;
+  $('share-wechat').setAttribute('aria-pressed', 'false');
+  $('share-qq').setAttribute('aria-pressed', 'false');
   pane('done');
 }
 function isImageName(name) {
@@ -294,9 +298,28 @@ $('upload').onclick = async () => {
     $('upload-progress').hidden = true;
   }
 };
+async function writeClipboard(value) {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch { /* Some mobile in-app browsers block Clipboard API. */ }
+  }
+  const temporary = document.createElement('textarea');
+  temporary.value = value;
+  temporary.readOnly = true;
+  temporary.style.cssText = 'position:fixed;top:0;left:0;opacity:0;z-index:-1';
+  document.body.append(temporary);
+  temporary.focus();
+  temporary.select();
+  let copied = false;
+  try { copied = document.execCommand('copy'); } catch { /* no clipboard permission */ }
+  temporary.remove();
+  return copied;
+}
 async function copyText(value, button, successLabel) {
-  try {
-    await navigator.clipboard.writeText(value);
+  const copied = await writeClipboard(value);
+  if (copied) {
     if (button) {
       const previous = button.textContent;
       button.textContent = successLabel;
@@ -304,37 +327,51 @@ async function copyText(value, button, successLabel) {
     } else {
       flash('取件码已复制');
     }
-  } catch {
-    flash('复制失败，请检查浏览器剪贴板权限');
+  } else {
+    flash('无法自动复制，请长按领取链接手动复制。');
   }
+  return copied;
 }
 $('copy-code').onclick = () => copyText($('done-code').textContent, null, '');
 $('copy-link').onclick = () => copyText(pickupUrl, $('copy-link'), '已复制');
 $('copy-public-link').onclick = () => copyText($('copy-public-link').dataset.url, $('copy-public-link'), '已复制');
 
-// On mobile, native share lets the user choose installed WeChat/QQ apps.
-// Desktop browsers cannot silently post into a user's chat; copy is a safe fallback.
-async function shareVia(platform) {
+// Browsers cannot select a specific WeChat/QQ recipient without that app's
+// cooperation. Always show an on-screen guide; offer native sharing where
+// supported, and reliable copy/select as fallback in embedded browsers.
+function shareVia(platform) {
   const target = platform === 'wechat' ? '微信' : 'QQ';
   const url = shareUrl || pickupUrl;
   if (!url) return;
-  if (typeof navigator.share === 'function') {
-    try {
-      await navigator.share({ title: '好奇猴快传', text: '分享给你一个临时文件或文字', url });
-      return;
-    } catch (error) {
-      if (error && error.name === 'AbortError') return;
-    }
-  }
-  try {
-    await navigator.clipboard.writeText(url);
-    flash('领取链接已复制，请打开' + target + '粘贴发给好友；也可以让好友扫二维码。');
-  } catch {
-    flash('请点击上方“复制领取链接”，再打开' + target + '发给好友。');
-  }
+  $('share-guide').hidden = false;
+  $('share-guide-title').textContent = '分享到' + target;
+  $('share-guide-tip').textContent = '点击“复制链接”，然后打开' + target + '粘贴给好友。';
+  $('share-guide-url').value = url;
+  $('share-system').hidden = typeof navigator.share !== 'function';
+  $('share-wechat').setAttribute('aria-pressed', String(platform === 'wechat'));
+  $('share-qq').setAttribute('aria-pressed', String(platform === 'qq'));
 }
 $('share-wechat').onclick = () => shareVia('wechat');
 $('share-qq').onclick = () => shareVia('qq');
+$('share-copy').onclick = async () => {
+  const ok = await copyText($('share-guide-url').value, $('share-copy'), '已复制');
+  if (ok) {
+    $('share-guide-tip').textContent = '链接已复制！返回微信或 QQ 对话框粘贴发送即可。';
+  } else {
+    $('share-guide-tip').textContent = '请长按下方的链接选择“复制”，再发给好友。';
+    $('share-guide-url').focus();
+    $('share-guide-url').select();
+  }
+};
+$('share-system').onclick = async () => {
+  if (typeof navigator.share !== 'function') return;
+  try {
+    await navigator.share({ title: '好奇猴快传', text: '分享给你一个临时文件或文字', url: shareUrl || pickupUrl });
+    $('share-guide-tip').textContent = '已打开手机分享选项。';
+  } catch (error) {
+    $('share-guide-tip').textContent = '未完成系统分享，请复制链接后在微信或 QQ 中发送。';
+  }
+};
 
 $('again').onclick = () => {
   for (const id of ['file', 'files', 'folder']) $(id).value = '';
