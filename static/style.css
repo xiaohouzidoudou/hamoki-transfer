@@ -190,6 +190,9 @@ html[data-theme="dark"] footer{color:#81848f}
 .file-select{margin:0}
 .file-pick{display:flex;align-items:center;gap:13px;width:100%;min-height:76px;padding:13px 17px;text-align:left;background:var(--field);color:var(--ink);border:1px dashed #c8d2df;border-radius:17px;font-size:16px;font-weight:670;box-shadow:none}
 .file-pick:hover{border-color:var(--blue);background:var(--blue-wash)}
+.pick-copy{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.pick-copy strong{font-size:15px;font-weight:670}
+.pick-copy small{font-size:11px;font-weight:450;color:var(--muted)}
 .file-symbol{width:42px;height:42px;display:grid;place-items:center;color:var(--blue);background:var(--blue-wash);border-radius:12px}
 .file-symbol svg{width:24px;height:24px}
 .pick-arrow{margin-left:auto;font-size:22px;font-weight:400;color:var(--muted)}
@@ -239,6 +242,11 @@ html[data-theme="dark"] .file-pick:hover{background:var(--blue-wash);border-colo
 
 /* 简洁醒目的四位数字取件码，兼容长版旧码展示。 */
 #done-code{font-size:clamp(24px,7vw,34px);letter-spacing:3px}
+.expiry-countdown{display:flex;align-items:center;justify-content:flex-start;gap:9px;max-width:100%;width:max-content;margin:0 auto 15px 0;padding:9px 12px;background:var(--soft);border:1px solid var(--line);border-radius:11px;text-align:left;font-size:12px;color:var(--muted)}
+.expiry-countdown strong{font-size:12px;font-weight:700;color:var(--blue);font-variant-numeric:tabular-nums;white-space:nowrap}
+.expiry-countdown.expired strong{color:#d92d20}
+html[data-theme="dark"] .expiry-countdown.expired strong{color:#ff6257}
+@media(max-width:520px){.expiry-countdown{padding:8px 10px;font-size:11px;gap:7px;margin-bottom:12px}.expiry-countdown strong{font-size:11px}}
 #code-input{text-align:center;font-size:21px;letter-spacing:3px;font-variant-numeric:tabular-nums}
 
 /* 最近发送历史：仅保留本浏览器中的非秘密取件元数据。 */
