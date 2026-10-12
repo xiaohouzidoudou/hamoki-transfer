@@ -7,3 +7,16 @@ body.public-share-page{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16
 .public-share-page a.download{display:block;text-align:center;background:#1678e8;color:#fff;text-decoration:none;padding:14px;border-radius:12px;font-weight:650;margin-top:20px}
 .public-share-page small{display:block;color:#8491a0;text-align:center;margin-top:20px}
 @media(prefers-color-scheme:dark){body.public-share-page{background:#101116;color:#f3f5f9}.public-share-page main{background:#212631}.public-share-page p,.public-share-page small{color:#a6b3c0}.public-share-page pre{background:#151a22;color:#f1f3f7}}
+
+
+.public-share-page .download-state{background:#eef6ff;border:1px solid #cfe3fb;border-radius:14px;padding:22px 16px;margin:20px 0;text-align:center}
+.public-share-page .download-state strong{display:block;font-size:18px;line-height:1.5}
+.public-share-page .download-state p{font-size:13px;margin:9px 0 0}
+.public-share-page .loading-ring{display:block;width:31px;height:31px;margin:0 auto 13px;border:3px solid #c2d9f5;border-top-color:#1678e8;border-radius:50%;animation:download-spinning .85s linear infinite}
+.public-share-page .shared-file{font-size:13px;overflow-wrap:anywhere}
+.public-share-page .shared-note-label{font-weight:700;font-size:13px}
+.public-share-page h2{font-size:18px;margin:20px 0}
+.public-share-page .download[hidden]{display:none!important}
+@keyframes download-spinning{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.public-share-page .loading-ring{animation:none}}
+@media(prefers-color-scheme:dark){.public-share-page .download-state{background:#1a3249;border-color:#314e70}.public-share-page .loading-ring{border-color:#31506c;border-top-color:#78b7ff}}
