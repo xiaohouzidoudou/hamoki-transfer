@@ -8,6 +8,7 @@
   <title>好奇猴快传 · 传文件，就这么简单</title>
   <script src="static/theme.js"></script>
   <link rel="stylesheet" href="static/style.css">
+  <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
 </head>
 <body>
@@ -54,7 +55,7 @@
               <span class="file-symbol" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
               </span>
-              <span>选择文件</span>
+              <span class="pick-copy"><strong>选择文件</strong><small>单个文件最大 5 GB</small></span>
               <span class="pick-arrow" aria-hidden="true">＋</span>
             </button>
             <input type="file" id="file" hidden>
@@ -106,6 +107,7 @@
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
+          <div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div>
           <div class="check" aria-hidden="true">✓</div>
           <h2>传送成功</h2>
           <p class="muted">取件码已经准备好，扫码即可领取。</p>
