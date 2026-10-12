@@ -25,7 +25,8 @@ mimetypes.add_type('image/webp', '.webp')
 ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'
 DIGITS = '23456789'
 LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
-TTL = {'1h': 3600, '24h': 86400, '7d': 7 * 86400}
+TTL = {'1d': 86400, '3d': 3 * 86400, '7d': 7 * 86400,
+       '1h': 3600, '24h': 86400}  # Legacy API compatibility; new UI defaults to 3d.
 LOCK = threading.RLock()
 RATE_LOCK = threading.Lock()
 RATE = {}
@@ -171,7 +172,7 @@ def create_app(test_config=None):
     @app.post('/api/send')
     def upload():
         limit('upload', 10)
-        ttl = request.form.get('ttl', '24h')
+        ttl = request.form.get('ttl', '3d')
         if ttl not in TTL:
             abort(400, description='保存时间不正确')
         uploads = [item for item in request.files.getlist('file') if item.filename]
