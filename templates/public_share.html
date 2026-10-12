@@ -6,16 +6,29 @@
   <meta name="referrer" content="no-referrer">
   <title>好奇猴快传 · 领取分享内容</title>
   <link rel="stylesheet" href="../static/public_share.css">
-
+  <script src="../static/public_share.js" defer></script>
 </head>
 <body class="public-share-page">
 <main>
   <h1>🐵 好奇猴快传</h1>
-  <p>这份分享包含文件和附带的文字，点击下方按钮即可下载，无需输入取件码。</p>
-  <p><strong>{{ name }}</strong></p>
+  {% if has_file %}
+  <div class="download-state" role="status" aria-live="polite">
+    <span class="loading-ring" aria-hidden="true"></span>
+    <strong>正在弹出下载，请勿操作</strong>
+    <p id="wait-tip">正在连接文件服务器，网络较慢时请稍等，不要重复点击。</p>
+  </div>
+  <p class="shared-file">分享文件：<strong>{{ name }}</strong></p>
+  {% if text %}
+  <p class="shared-note-label">附带文字</p>
   <pre>{{ text }}</pre>
-  <a class="download" href="?download=1">下载文件</a>
-  <small>临时分享，过期或领取次数用尽后自动失效</small>
+  {% endif %}
+  <a id="manual-download" class="download" href="?download=1">没有弹出下载？点这里手动下载</a>
+  <small>首次进入会自动尝试下载。文件过期或领取次数用尽后无法再次下载。</small>
+  {% else %}
+  <h2>收到一段文字</h2>
+  <pre>{{ text }}</pre>
+  <small>文字已显示在上方，无需再输入取件码。</small>
+  {% endif %}
 </main>
 </body>
 </html>
