@@ -1,0 +1,155 @@
+/* Hamoki interaction motion: smooth selection, navigation, menus and theme.
+   Each control retains its native semantic behavior and respects reduced motion. */
+:root{
+  --motion-ease:cubic-bezier(.22,1,.36,1);
+  --motion-spring:cubic-bezier(.2,.85,.25,1);
+  --motion-speed:300ms;
+}
+/* Expiration time: one continuous green slider moves across all three dates. */
+.ttl-options{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+.ttl-options::before{
+  content:"";
+  position:absolute;
+  top:3px;left:3px;bottom:3px;
+  width:calc((100% - 12px) / 3);
+  border-radius:13px;
+  background:linear-gradient(135deg,#aeff5f,#2ec844);
+  box-shadow:0 3px 12px rgba(65,198,56,.23);
+  transform:translateX(calc(100% + 3px));
+  transition:transform var(--motion-speed) var(--motion-ease),
+    background-color var(--motion-speed) ease;
+  will-change:transform;
+  pointer-events:none;
+}
+.ttl-options[data-index="0"]::before{transform:translateX(0)}
+.ttl-options[data-index="1"]::before{transform:translateX(calc(100% + 3px))}
+.ttl-options[data-index="2"]::before{transform:translateX(calc(200% + 6px))}
+.ttl-options label{position:relative;z-index:1}
+.ttl-options label span{
+  background:transparent;
+  transition:color 200ms ease, transform 200ms var(--motion-spring);
+}
+.ttl-options input:checked+span{
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#0c401f;
+}
+.ttl-options input:not(:checked):hover+span{color:var(--ink);transform:translateY(-1px)}
+html[data-theme="dark"] .ttl-options input:checked+span{color:#103b1c}
+/* Main tabs use the same sliding pill, following the selected panel. */
+.tabs{position:relative;isolation:isolate}
+.tabs::before{
+  content:"";
+  position:absolute;
+  top:5px;bottom:5px;left:5px;
+  width:calc((100% - 18px) / 3);
+  border-radius:11px;
+  background:linear-gradient(125deg,#b3ff65,#43df44);
+  box-shadow:0 3px 13px rgba(57,167,44,.18);
+  transform:translateX(0);
+  transition:transform var(--motion-speed) var(--motion-ease);
+  will-change:transform;
+  pointer-events:none;
+}
+.tabs[data-index="1"]::before{transform:translateX(calc(100% + 4px))}
+.tabs[data-index="2"]::before{transform:translateX(calc(200% + 8px))}
+.tabs button{
+  position:relative;z-index:1;
+  flex:1 1 0;width:0;
+  transition:color 200ms ease,transform 200ms var(--motion-spring);
+}
+.tabs button.active,html[data-theme="dark"] .tabs button.active{
+  background:transparent!important;box-shadow:none!important;
+  color:#123a22!important;
+}
+.tabs button:not(.active):hover{transform:translateY(-1px)}
+/* Directional panel entrance reinforces navigation, without moving the form. */
+.workspace{--panel-entry:10px}
+.workspace[data-slide-direction="backward"]{--panel-entry:-10px}
+.workspace .pane:not([hidden]){
+  animation:hamoki-pane-enter 270ms var(--motion-ease) both;
+}
+@keyframes hamoki-pane-enter{
+  from{opacity:.34;transform:translateX(var(--panel-entry))}
+  to{opacity:1;transform:translateX(0)}
+}
+/* Menu stays in the DOM; opacity/visibility animate on both open and close. */
+.file-select .picker-menu:not([hidden]){
+  transform-origin:top center;
+  transition:
+    opacity 220ms ease,
+    transform 260ms var(--motion-ease),
+    visibility 220ms ease,
+    background-color 250ms ease,
+    border-color 250ms ease;
+}
+.file-select .picker-menu[data-state="closed"]{
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  transform:translateY(-11px) scale(.985);
+}
+.file-select .picker-menu[data-state="open"]{
+  visibility:visible!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  transform:translateY(0) scale(1);
+}
+.file-select .picker-menu[data-state="open"] button{
+  animation:hamoki-menu-item 230ms var(--motion-ease) both;
+}
+.file-select .picker-menu[data-state="open"] button:nth-child(2){animation-delay:35ms}
+.file-select .picker-menu[data-state="open"] button:nth-child(3){animation-delay:70ms}
+@keyframes hamoki-menu-item{
+  from{opacity:.55;transform:translateY(-5px)}
+  to{opacity:1;transform:translateY(0)}
+}
+/* Small presses and inline share feedback feel responsive, not abrupt. */
+.file-pick,.picker-menu button,.social-share button,
+.primary,.secondary,.history-item button,
+.preview-toolbar button,#copy-code,#copy-public-link,
+#copy-link,#again,.theme-switch select{
+  transition:
+    transform 190ms var(--motion-spring),
+    background-color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 200ms ease;
+}
+.file-pick:active,.picker-menu button:active,
+.social-share button:active,.primary:active,.secondary:active{
+  transform:scale(.985);
+}
+.share-guide:not([hidden]),.found:not([hidden]),
+.selected-file:not([hidden]){
+  animation:hamoki-content-in 260ms var(--motion-ease) both;
+}
+@keyframes hamoki-content-in{
+  from{opacity:0;transform:translateY(-7px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.card,.file-select,.tabs,.ttl-options,.receive-hero,
+.result-card,.share-link-card,.qr-share-card,.social-share,
+.expiry-selector,textarea,input,footer{
+  transition:background-color 290ms ease,border-color 290ms ease,color 250ms ease;
+}
+/* Native document view transitions cross-fade the large summer/night gradients. */
+::view-transition-old(root),::view-transition-new(root){
+  animation-duration:320ms;
+  animation-timing-function:ease-in-out;
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms!important;
+    animation-delay:0ms!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important;
+  }
+  ::view-transition-old(root),::view-transition-new(root){
+    animation-duration:0.01ms!important;
+  }
+}
