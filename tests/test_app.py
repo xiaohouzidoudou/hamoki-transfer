@@ -434,6 +434,52 @@ class HamokiTest(unittest.TestCase):
         res = self.client.post('/api/send', data={'file': (io.BytesIO(b'x' * 10001), 'big.txt')})
         self.assertEqual(res.status_code, 507)
 
+    def test_default_quota_is_fifteen_gib(self):
+        with patch.dict(os.environ, {'TOTAL_LIMIT_MB': '15360'}):
+            app = create_app({'TESTING': True, 'DATA_DIR': self.dir.name})
+            self.assertEqual(app.config['TOTAL_BYTES'], 15 * 1024 ** 3)
+            self.assertEqual(app.config['CLEANUP_INTERVAL_SECONDS'], 300)
+
+    def test_startup_removes_expired_file_and_share_link(self):
+        from pathlib import Path
+        response = self.client.post('/api/send', data={
+            'file': (io.BytesIO(b'will expire'), 'expiry-check.txt'),
+        })
+        self.assertEqual(response.status_code, 201)
+        code = response.json['code']
+        stored = Path(self.dir.name) / 'files' / code
+        self.assertTrue(stored.is_file())
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            con.execute('UPDATE shares SET expires=? WHERE code=?', (int(time.time()) - 1, code))
+        self.assertEqual(self.client.get('/api/item/' + code).status_code, 404)
+        # Even if the service was stopped at the moment of expiration,
+        # reopening it physically erases expired files and both DB records.
+        restarted = create_app({'TESTING': True, 'DATA_DIR': self.dir.name})
+        self.assertFalse(stored.exists())
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM shares WHERE code=?', (code,)).fetchone()[0], 0)
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM public_links WHERE code=?', (code,)).fetchone()[0], 0)
+        self.assertEqual(restarted.test_client().get(response.json['public_path']).status_code, 404)
+
+    def test_total_file_quota_counts_all_active_files_and_recovers(self):
+        from pathlib import Path
+        app = create_app({'TESTING': True, 'DATA_DIR': self.dir.name, 'TOTAL_BYTES': 7})
+        client = app.test_client()
+        first = client.post('/api/send', data={'file': (io.BytesIO(b'abcd'), 'one.bin')})
+        self.assertEqual(first.status_code, 201)
+        second = client.post('/api/send', data={'file': (io.BytesIO(b'1234'), 'two.bin')})
+        self.assertEqual(second.status_code, 507)
+        self.assertIn('容量不足', second.json['error'])
+        self.assertEqual(len(list((Path(self.dir.name) / 'files').iterdir())), 1)
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            con.execute('UPDATE shares SET expires=? WHERE code=?', (int(time.time()) - 1, first.json['code']))
+        # Startup cleanup restores quota and removes file bytes.
+        restarted = create_app({'TESTING': True, 'DATA_DIR': self.dir.name, 'TOTAL_BYTES': 7})
+        self.assertFalse((Path(self.dir.name) / 'files' / first.json['code']).exists())
+        third = restarted.test_client().post('/api/send', data={'file': (io.BytesIO(b'1234'), 'three.bin')})
+        self.assertEqual(third.status_code, 201)
+
+
 
 if __name__ == '__main__':
     unittest.main()
