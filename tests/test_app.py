@@ -335,7 +335,7 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('static/countdown.js', html)
         self.assertIn('单次总大小最大 5 GB', html)
         self.assertIn('最多领取 10 次', html)
-        self.assertIn('class="danger-text"', html)
+        self.assertIn('class="pickup-limit"', html)
         self.assertIn('id="picker-menu"', html)
         self.assertIn('id="files" multiple', html)
         self.assertIn('id="folder" webkitdirectory', html)
