@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="static/brand.css">
   <link rel="stylesheet" href="static/summer.css">
   <link rel="stylesheet" href="static/motion.css">
+  <link rel="stylesheet" href="static/icons.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
 </head>
@@ -64,9 +65,9 @@
               <svg class="pick-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
             </button>
             <div class="picker-menu" id="picker-menu" data-state="closed" aria-hidden="true" inert>
-              <button type="button" id="pick-single"><span class="menu-icon single" aria-hidden="true">▤</span><span class="menu-copy"><strong>单个文件</strong><small>选择一个文件进行上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
-              <button type="button" id="pick-multiple"><span class="menu-icon multiple" aria-hidden="true">▣</span><span class="menu-copy"><strong>多个文件</strong><small>选择多个文件一起上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
-              <button type="button" id="pick-folder"><span class="menu-icon folder" aria-hidden="true">▱</span><span class="menu-copy"><strong>整个文件夹</strong><small>选择文件夹，自动打包传送</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+              <button type="button" id="pick-single"><span class="menu-icon single" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#file"></use></svg></span><span class="menu-copy"><strong>单个文件</strong><small>选择一个文件进行上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+              <button type="button" id="pick-multiple"><span class="menu-icon multiple" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#files"></use></svg></span><span class="menu-copy"><strong>多个文件</strong><small>选择多个文件一起上传</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+              <button type="button" id="pick-folder"><span class="menu-icon folder" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#folder"></use></svg></span><span class="menu-copy"><strong>整个文件夹</strong><small>选择文件夹，自动打包传送</small></span><svg class="menu-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
             </div>
             <input type="file" id="file" hidden>
             <input type="file" id="files" multiple hidden>
@@ -77,11 +78,11 @@
             </div>
           </div>
 
-          <label class="text-label" for="text"><span aria-hidden="true">✎</span> 也可传一段文字</label>
+          <label class="text-label" for="text"><span aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#edit"></use></svg></span> 也可传一段文字</label>
           <textarea id="text" rows="2" maxlength="65536" placeholder="在这里输入想分享的文字…"></textarea>
 
           <div class="row expiry-selector">
-            <div class="row-label"><span class="expiry-symbol" aria-hidden="true">◷</span><span>自动销毁<small>文件将在设定时间后自动删除</small></span></div>
+            <div class="row-label"><span class="expiry-symbol" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#clock"></use></svg></span><span>自动销毁<small>文件将在设定时间后自动删除</small></span></div>
             <div class="ttl-options" data-index="1" role="group" aria-label="文件保留时间">
               <label><input type="radio" name="ttl" value="1d"><span>1天</span></label>
               <label><input type="radio" name="ttl" value="3d" checked><span>3天</span></label>
@@ -94,17 +95,17 @@
             <progress id="progress-bar" value="0" max="100"></progress>
           </div>
 
-          <button class="primary full" type="button" id="upload"><span aria-hidden="true">➤</span> 立即传送</button>
+          <button class="primary full" type="button" id="upload"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#send"></use></svg> 立即传送</button>
           <p class="hint" id="send-tip">✦ 默认 3 天后自动销毁 · 无需登录</p>
         </section>
 
         <section id="pane-get" class="pane receive-pane" role="tabpanel" aria-labelledby="tab-get" hidden>
           <div class="receive-hero"><div class="receive-intro-copy"><h2>领取分享内容</h2><p>输入取件码，或通过好友分享链接直接领取</p></div><img src="static/hamoki-avatar.webp" alt="" width="96" height="96"></div>
           <input id="code-input" aria-label="取件码" maxlength="12" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="输入取件码，例如 A5K7">
-          <button class="primary full" id="lookup" type="button">查找文件 <span aria-hidden="true">→</span></button>
+          <button class="primary full" id="lookup" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#search"></use></svg> 查找文件</button>
           <div id="found" class="found" hidden>
             <div class="file-line">
-              <span class="file-icon" aria-hidden="true">📄</span>
+              <span class="file-icon" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#file"></use></svg></span>
               <div class="file-desc"><strong id="found-name"></strong><small id="found-details"></small></div>
             </div>
             <button id="claim" type="button" class="primary full">领取文字</button>
@@ -122,7 +123,7 @@
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
-          <p class="pickup-limit"><span aria-hidden="true">♡</span> 最多领取 10 次 <span class="pickup-limit-note">· 到期后自动销毁</span></p>
+          <p class="pickup-limit"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#shield"></use></svg> 最多领取 10 次 <span class="pickup-limit-note">· 到期后自动销毁</span></p>
           <div class="success-hero">
             <div class="hero-copy">
               <h2 class="done-title">传送成功 <span>· 专属取件码</span></h2>
@@ -132,17 +133,17 @@
             <img class="hero-mascot" src="static/hamoki-avatar.webp" alt="好奇猴探险家" width="128" height="128">
           </div>
           <div class="result-card">
-            <div class="section-title"><span class="section-icon">#</span><strong>专属取件码</strong><small>好友在「好奇猴快传」输入即可领取</small></div>
+            <div class="section-title"><span class="section-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#key"></use></svg></span><strong>专属取件码</strong><small>好友在「好奇猴快传」输入即可领取</small></div>
             <div class="code-wrap">
             <strong id="done-code" class="code"></strong>
             <button id="copy-code" class="copy-code" type="button" aria-label="复制取件码" title="复制取件码">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></svg>
             </button>
           </div>
-            <div class="countdown-row"><div class="countdown-symbol" aria-hidden="true">◷</div><div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div><small>超时后文件将自动清理<br>请及时分享给好友</small></div>
+            <div class="countdown-row"><div class="countdown-symbol" aria-hidden="true"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#clock"></use></svg></div><div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div><small>超时后文件将自动清理<br>请及时分享给好友</small></div>
           </div>
           <div class="share-link-card">
-            <div class="section-title"><span class="section-icon">↗</span><strong>公开领取链接</strong><small>任何人打开链接即可领取</small></div>
+            <div class="section-title"><span class="section-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#link"></use></svg></span><strong>公开领取链接</strong><small>任何人打开链接即可领取</small></div>
             <div class="public-link-panel">
             <span class="public-link-label">链接</span>
             <a id="public-link-url" class="public-link-url" href="#" target="_blank" rel="noopener noreferrer"></a>
@@ -152,15 +153,15 @@
           </div>
           <div class="done-share-grid"><div class="qr-share-card">
             <div class="qr-share-info">
-              <div class="section-title"><span class="section-icon qr-icon">▦</span><strong>二维码分享</strong></div>
+              <div class="section-title"><span class="section-icon qr-icon"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#qr"></use></svg></span><strong>二维码分享</strong></div>
               <p>好友用手机扫一扫<br>即可打开领取页面</p>
             </div>
             <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>手机扫码领取</span></div>
           </div>
           <div class="social-share" aria-label="社交分享">
             <span>分享给好友</span>
-            <button id="share-wechat" type="button" aria-label="分享到微信"><span class="social-bubble" aria-hidden="true">微</span> 微信</button>
-            <button id="share-qq" type="button" aria-label="分享到QQ"><span class="social-bubble qq" aria-hidden="true">Q</span> QQ</button>
+            <button id="share-wechat" type="button" aria-label="分享到微信"><span class="social-bubble" aria-hidden="true"><svg class="ui-icon ui-brand-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#wechat"></use></svg></span> 微信</button>
+            <button id="share-qq" type="button" aria-label="分享到QQ"><span class="social-bubble qq" aria-hidden="true"><svg class="ui-icon ui-brand-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#qq"></use></svg></span> QQ</button>
             <div id="share-guide" class="share-guide" hidden role="status" aria-live="polite">
               <strong id="share-guide-title">分享领取链接</strong>
               <p id="share-guide-tip">复制链接后，粘贴发送给好友。</p>
@@ -171,7 +172,7 @@
           </div>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
-            <button id="again" class="secondary" type="button">再传一个</button>
+            <button id="again" class="secondary" type="button"><svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#refresh"></use></svg> 再传一个</button>
           </div>
         </section>
 
