@@ -170,11 +170,15 @@ function formatSize(bytes) {
   return (bytes / 1073741824).toFixed(2) + ' GB';
 }
 // The three upload modes are always visible, like the approved design.
-function closePicker() {
-  $('picker-menu').hidden = false;
-  $('pick').setAttribute('aria-expanded', 'true');
+function setPickerOpen(open) {
+  $('picker-menu').hidden = !open;
+  $('pick').setAttribute('aria-expanded', String(open));
+  $('drop').classList.toggle('picker-expanded', open);
 }
-$('pick').onclick = () => $('file').click();
+function closePicker() {
+  setPickerOpen(false);
+}
+$('pick').onclick = () => setPickerOpen($('picker-menu').hidden);
 for (const [mode, input] of [['single', 'file'], ['multiple', 'files'], ['folder', 'folder']]) {
   $('pick-' + mode).onclick = () => {
     closePicker();
