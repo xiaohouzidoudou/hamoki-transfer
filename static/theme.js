@@ -8,7 +8,8 @@
     ? window.matchMedia('(prefers-color-scheme: dark)')
     : null;
 
-  let preference = 'auto';
+  // The explorer theme is the visual default; explicit saved preferences still win.
+  let preference = 'dark';
   try {
     const saved = localStorage.getItem(storageKey);
     if (modes.has(saved)) preference = saved;
@@ -22,7 +23,7 @@
     document.documentElement.dataset.theme = dark ? 'dark' : 'light';
 
     const colorMeta = document.querySelector('meta[name="theme-color"]');
-    if (colorMeta) colorMeta.content = dark ? '#0b1220' : '#f8fafc';
+    if (colorMeta) colorMeta.content = dark ? '#061310' : '#f7fdf2';
 
     const select = document.getElementById('theme-mode');
     if (select) select.value = preference;
