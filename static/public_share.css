@@ -26,3 +26,21 @@ body.public-share-page{background:#f6f7fb;color:#1b2430;margin:0;padding:28px 16
 @media(prefers-reduced-motion:reduce){.public-share-page .loading-ring{animation:none}}
 @media(prefers-color-scheme:dark){.public-share-page .danger-text{color:#ff6257}.public-share-page .expiry-countdown{background:#151a22;border-color:#353d4b;color:#a6b3c0}.public-share-page .expiry-countdown strong{color:#78b7ff}.public-share-page .expiry-countdown.expired strong{color:#ff6257}}
 @media(prefers-color-scheme:dark){.public-share-page .download-state{background:#1a3249;border-color:#314e70}.public-share-page .loading-ring{border-color:#31506c;border-top-color:#78b7ff}}
+
+/* 公开领取页同步品牌视觉：保持文字领取与自动文件下载行为不变 */
+body.public-share-page{background:radial-gradient(ellipse at 50% 0,#163426,#071713 68%,#05100e);color:#f3fff5;min-height:100vh}
+.public-share-page main{background:linear-gradient(135deg,#0c3024,#0b211f);border:1px solid rgba(165,243,126,.33);box-shadow:0 16px 45px rgba(0,0,0,.26);max-width:560px}
+.public-share-page .public-brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;color:#f3fff5;font-size:17px;font-weight:780}
+.public-share-page .public-brand img{display:block;width:42px;height:42px;object-fit:cover;border-radius:12px;border:1px solid #7fd064}
+.public-share-page .public-brand strong{color:#b2fc78}
+.public-share-page .public-brand small{display:block;margin:3px 0 0;text-align:left;font-size:10px;font-weight:400;color:#a9c4af}
+.public-share-page .page-brand{text-align:left;font-size:23px;color:#f1fff0}
+.public-share-page p,.public-share-page small{color:#abc5b6}
+.public-share-page .download-state{background:#123a2c;border-color:rgba(139,233,122,.45)}
+.public-share-page a.download{background:linear-gradient(110deg,#d5ffa0,#a2fa76);color:#0c2a13}
+.public-share-page pre{background:#09221b;color:#f0ffed;border:1px solid rgba(165,243,126,.2)}
+.public-share-page .expiry-countdown{background:#112d24;border:1px solid rgba(165,243,126,.25);color:#a9c4af}
+.public-share-page .expiry-countdown strong{color:#b4ff7d}
+.public-share-page .danger-text{color:#b4ff7d}
+.public-share-page .loading-ring{border-color:#335f4a;border-top-color:#b4ff7d}
+@media(max-width:540px){body.public-share-page{padding:16px 12px}.public-share-page main{margin:18px auto;padding:20px 16px;border-radius:19px}}
