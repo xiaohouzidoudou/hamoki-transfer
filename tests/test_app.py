@@ -41,6 +41,18 @@ class HamokiTest(unittest.TestCase):
         RATE.clear()
         self.assertEqual(self.client.post('/api/text/' + code).status_code, 404)
 
+    def test_new_default_and_expiry_options(self):
+        import time
+        default = self.client.post('/api/send', data={'text': 'default lifetime'})
+        self.assertEqual(default.status_code, 201)
+        self.assertEqual(default.json['ttl'], '3d')
+        self.assertEqual(default.json['expires'] - default.json['created'], 3 * 86400)
+        for ttl, seconds in [('1d', 86400), ('3d', 3 * 86400), ('7d', 7 * 86400)]:
+            response = self.client.post('/api/send', data={'text': 'expires', 'ttl': ttl})
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.json['expires'] - response.json['created'], seconds)
+        self.assertEqual(self.client.post('/api/send', data={'text': 'x', 'ttl': '5d'}).status_code, 400)
+
     def test_file_size_boundary_and_error(self):
         # One MiB test limit exercises the same logic without allocating 5 GiB.
         app = create_app({
@@ -249,6 +261,8 @@ class HamokiTest(unittest.TestCase):
             self.assertIn('正在弹出下载，请勿操作'.encode('utf-8'), landing.data)
             self.assertIn(b'public_share.js', landing.data)
             self.assertIn('class="page-brand"'.encode('utf-8'), landing.data)
+            self.assertIn(b'class="public-hero"', landing.data)
+            self.assertIn(b'public-summer.css', landing.data)
             self.assertIn('最多领取 10 次'.encode('utf-8'), landing.data)
             self.assertIn(b'data-expiry-countdown', landing.data)
             self.assertIn(b'countdown.js', landing.data)
@@ -298,6 +312,16 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('class="share-link-card"', html)
         self.assertIn('class="qr-share-card"', html)
         self.assertIn('static/brand.css', html)
+        self.assertIn('static/summer.css', html)
+        self.assertIn('value="1d"', html)
+        self.assertIn('value="3d" checked', html)
+        self.assertIn('value="7d"', html)
+        self.assertNotIn('1 小时</option>', html)
+        self.assertIn('class="ttl-options"', html)
+        self.assertIn('id="picker-menu"', html)
+        self.assertIn('class="done-share-grid"', html)
+        self.assertNotIn('开源项目 ↗', html)
+        self.assertNotIn('FileCodeBox', html)
         self.assertIn('static/hamoki-avatar.webp', html)
         avatar = self.client.get('/static/hamoki-avatar.webp')
         self.assertEqual(avatar.status_code, 200)
