@@ -35,7 +35,7 @@ function renderChosenFiles(){
   const row=document.createElement('div');row.className='private-selected-item';
   const name=document.createElement('span');name.textContent=file.name;
   const remove=document.createElement('button');remove.type='button';remove.className='private-remove';remove.textContent='移除';
-  remove.onclick=()=>{chosenFiles.splice(index,1);renderChosenFiles()};
+  remove.onclick=()=>{chosenFiles.splice(index,1);el('private-files').value='';renderChosenFiles()};
   row.append(name,remove);list.append(row);
  }
  el('private-file-info').textContent=chosenFiles.length?'共 '+chosenFiles.length+' 个文件':'';
