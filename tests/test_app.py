@@ -142,8 +142,15 @@ class HamokiTest(unittest.TestCase):
         direct_path = response.json['public_path']
         self.assertTrue(direct_path.startswith('/f/'))
         self.assertNotIn(response.json['code'], direct_path)
+        for i in range(2):
+            landing = self.client.get(direct_path)
+            self.assertEqual(landing.status_code, 200)
+            self.assertIn('text/html', landing.content_type)
+            self.assertIn('正在弹出下载，请勿操作'.encode('utf-8'), landing.data)
+            self.assertIn(b'public_share.js', landing.data)
+        self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 5)
         for i in range(5):
-            with self.client.get(direct_path) as result:
+            with self.client.get(direct_path + '?download=1') as result:
                 self.assertEqual(result.status_code, 200)
                 self.assertEqual(result.data, b'direct-link')
                 self.assertIn('attachment', result.headers['Content-Disposition'])
@@ -154,8 +161,9 @@ class HamokiTest(unittest.TestCase):
         url = response.json['public_path']
         result = self.client.get(url)
         self.assertEqual(result.status_code, 200)
-        self.assertEqual(result.data.decode('utf8'), 'Direct plain text')
-        self.assertIn('text/plain', result.headers['Content-Type'])
+        self.assertIn('Direct plain text', result.data.decode('utf8'))
+        self.assertIn('text/html', result.headers['Content-Type'])
+        self.assertNotIn('正在弹出下载，请勿操作'.encode('utf8'), result.data)
 
     def test_public_combined_link_shows_text_and_download(self):
         response = self.client.post('/api/send', data={
@@ -166,11 +174,18 @@ class HamokiTest(unittest.TestCase):
         webpage = self.client.get(direct_path)
         self.assertEqual(webpage.status_code, 200)
         self.assertIn(b'private note', webpage.data)
+        self.assertIn('正在弹出下载，请勿操作'.encode('utf8'), webpage.data)
         self.assertIn(b'?download=1', webpage.data)
         self.assertEqual(self.client.get('/api/item/' + response.json['code']).json['remaining'], 5)
         with self.client.get(direct_path + '?download=1') as file:
             self.assertEqual(file.status_code, 200)
             self.assertEqual(file.data, b'test-image')
+
+    def test_success_page_shows_public_link_above_qr(self):
+        page = self.client.get('/')
+        self.assertEqual(page.status_code, 200)
+        html = page.data.decode('utf8')
+        self.assertLess(html.index('id="public-link-url"'), html.index('id="done-qr"'))
 
     def test_public_link_rejects_missing_or_invalid_token(self):
         self.assertEqual(self.client.get('/f/short').status_code, 404)
