@@ -268,3 +268,18 @@ html[data-theme="light"] .done .final-hint{color:#456454}
   .countdown-row>small{display:none}
   .done .done-title{font-size:18px}
 }
+
+/* 叶片装饰采用本地 SVG，限制透明度并让文字始终在前景。 */
+.success-hero::after{
+  content:"";position:absolute;right:-22px;bottom:-16px;z-index:-1;
+  width:200px;height:120px;
+  background:url("jungle-foliage.svg") right bottom/contain no-repeat;
+  opacity:.35;pointer-events:none;
+}
+.result-card::after,.qr-share-card::before{
+  content:"";position:absolute;right:-32px;bottom:-45px;width:170px;height:110px;
+  background:url("jungle-foliage.svg") right bottom/contain no-repeat;
+  opacity:.13;pointer-events:none;
+}
+.qr-share-card::before{right:auto;left:-25px;bottom:-24px;opacity:.19;transform:scaleX(-1)}
+@media(max-width:520px){.success-hero::after{width:156px;height:100px;right:-12px;bottom:-8px}}
