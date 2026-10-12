@@ -142,7 +142,7 @@ sessionStorage.removeItem('hamoki_upload_key');
 if (new URLSearchParams(location.hash.substring(1)).has('key')) {
   history.replaceState(null, '', location.pathname + location.search);
 }
-$('send-tip').textContent = '无需登录，直接上传 · 文件到期后自动删除';
+$('send-tip').textContent = '✦ 默认 3 天后自动销毁 · 无需登录';
 
 function flash(message) {
   $('message').textContent = message || '';
@@ -267,7 +267,7 @@ $('upload').onclick = async () => {
   if (!selectedFiles.length && !text) { flash('请先选择文件，或输入一段文字。'); return; }
   if (selectedFiles.reduce((sum, file) => sum + file.size, 0) > MAX_FILE_BYTES) { flash('文件总大小不能超过 5 GB'); return; }
   const form = new FormData();
-  form.append('ttl', $('ttl').value);
+  form.append('ttl', document.querySelector('input[name="ttl"]:checked')?.value || '3d');
   form.append('selection', selectedMode);
   for (const file of selectedFiles) {
     form.append('file', file, selectedMode === 'folder' ? (file.webkitRelativePath || file.name) : file.name);
