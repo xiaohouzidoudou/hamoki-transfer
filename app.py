@@ -144,11 +144,16 @@ def create_app(test_config=None):
             abort(400, description='保存时间不正确')
         uploaded = request.files.get('file')
         body = request.form.get('text', '')
-        if bool(uploaded and uploaded.filename) == bool(body.strip()):
-            abort(400, description='请选择一个文件或输入一段文字')
+        body = body.strip()
+        has_file = bool(uploaded and uploaded.filename)
+        if not has_file and not body:
+            abort(400, description='请选择文件或输入文字，可以同时发送')
+        text_bytes = len(body.encode('utf-8'))
+        if text_bytes > 65536:
+            abort(400, description='文字长度不能超过 65536 字节')
         now = int(time.time())
         code = make_code()
-        kind = 'file' if uploaded and uploaded.filename else 'text'
+        kind = 'file' if has_file else 'text'
         pending = None
         if kind == 'file':
             name = uploaded.filename.replace('\\', '/').split('/')[-1].strip()[:200]
@@ -163,13 +168,9 @@ def create_app(test_config=None):
             except Exception:
                 pending.unlink(missing_ok=True)
                 raise
-            body = None
         else:
             name = '临时文字.txt'
-            body = body.strip()
-            size = len(body.encode('utf-8'))
-            if not 0 < size <= 65536:
-                abort(400, description='文字长度须在 1 至 65536 字节之间')
+            size = text_bytes
         try:
             with LOCK, db() as con:
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
@@ -183,7 +184,10 @@ def create_app(test_config=None):
         finally:
             if pending:
                 pending.unlink(missing_ok=True)
-        return jsonify(code=code, ttl=ttl, size=size, name=name), 201
+        return jsonify(
+            code=code, ttl=ttl, size=size, name=name,
+            has_text=bool(body), has_file=has_file, created=now, expires=now + TTL[ttl]
+        ), 201
 
     def lookup_share(code):
         if len(code) != 12 or any(c not in ALPHABET for c in code):
@@ -198,11 +202,24 @@ def create_app(test_config=None):
     def lookup(code):
         limit('lookup', 40)
         row = lookup_share(code.upper())
-        return jsonify(code=row['code'], name=row['name'], kind=row['kind'], size=row['size'], expires=row['expires'], remaining=row['remaining'])
+        return jsonify(
+            code=row['code'], name=row['name'], kind=row['kind'],
+            size=row['size'], expires=row['expires'], remaining=row['remaining'],
+            has_text=bool(row['body']), has_file=row['kind'] == 'file'
+        )
 
     def consume(code, expected_kind):
         with LOCK, db() as con:
-            row = con.execute('SELECT * FROM shares WHERE code=? AND kind=? AND expires > ? AND remaining > 0', (code, expected_kind, int(time.time()))).fetchone()
+            if expected_kind == 'text':
+                row = con.execute(
+                    "SELECT * FROM shares WHERE code=? AND body IS NOT NULL AND body != '' AND expires > ? AND remaining > 0",
+                    (code, int(time.time()))
+                ).fetchone()
+            else:
+                row = con.execute(
+                    "SELECT * FROM shares WHERE code=? AND kind=? AND expires > ? AND remaining > 0",
+                    (code, expected_kind, int(time.time()))
+                ).fetchone()
             if row is None:
                 abort(404, description='取件码不存在或已过期')
             con.execute('UPDATE shares SET remaining=remaining-1 WHERE code=?', (code,))
