@@ -4,8 +4,10 @@ const $ = id => document.getElementById(id);
 // 每个项目独占自己的 URL 子路径，也兼容单独部署在域名根目录。
 const appRoot = new URL('./', location.href).pathname;
 const appUrl = path => appRoot + path.replace(/^\/+/, '');
-let selectedFile = null;
+let selectedFiles = [];
+let selectedMode = 'single';
 let pickupUrl = '';
+let shareUrl = '';
 const HISTORY_KEY = 'hamoki-transfer-sent-v1';
 const historyTtl = { '1h': 3600, '24h': 86400, '7d': 604800 };
 const MAX_FILE_BYTES = 5 * 1024 * 1024 * 1024;
@@ -34,6 +36,7 @@ function displayDone(item) {
     ? item.public_path.substring(1)
     : (item.has_file && !item.has_text ? 'd/' + encodeURIComponent(item.code) : '?code=' + encodeURIComponent(item.code));
   const publicUrl = location.origin + appRoot + publicPath;
+  shareUrl = publicUrl;
   $('public-link-url').textContent = publicUrl;
   $('public-link-url').href = publicUrl;
   $('copy-public-link').dataset.url = publicUrl;
@@ -60,6 +63,28 @@ function displayDone(item) {
   $('copy-link').textContent = '复制领取链接';
   pane('done');
 }
+function isImageName(name) {
+  return /\.(png|jpe?g|gif|webp)$/i.test(name || '');
+}
+function previewUrl(item) {
+  return typeof item.public_path === 'string' && /^\/f\/[A-Za-z0-9_-]{16,64}$/.test(item.public_path)
+    ? appUrl(item.public_path.substring(1) + '?preview=1')
+    : appUrl('api/preview/' + encodeURIComponent(item.code));
+}
+function openHistoryPreview(item) {
+  const dialog = $('preview-dialog');
+  $('preview-name').textContent = item.name;
+  $('preview-image').src = previewUrl(item);
+  if (!dialog.open) dialog.showModal();
+}
+$('close-preview').onclick = () => $('preview-dialog').close();
+$('preview-dialog').addEventListener('click', event => {
+  if (event.target === $('preview-dialog')) $('preview-dialog').close();
+});
+$('preview-dialog').addEventListener('close', () => $('preview-image').removeAttribute('src'));
+$('preview-image').addEventListener('error', () => {
+  $('preview-name').textContent = '图片预览失败，文件可能已经过期';
+});
 function renderHistory() {
   const target = $('history-list');
   target.replaceChildren();
@@ -83,6 +108,24 @@ function renderHistory() {
     const meta = document.createElement('small');
     meta.textContent = item.code + ' · ' + formatWhen(item.created) + (expired ? ' · 已过期' : '');
     info.append(name, meta);
+    if (item.has_file && isImageName(item.name) && !expired) {
+      const preview = document.createElement('button');
+      preview.type = 'button';
+      preview.className = 'history-preview';
+      preview.title = '点击预览图片';
+      preview.setAttribute('aria-label', '预览 ' + item.name);
+      const thumb = document.createElement('img');
+      thumb.loading = 'lazy';
+      thumb.alt = '';
+      thumb.src = previewUrl(item);
+      thumb.onerror = () => {
+        thumb.remove();
+        preview.textContent = '预览图片';
+      };
+      preview.append(thumb);
+      preview.onclick = () => openHistoryPreview(item);
+      row.append(preview);
+    }
     const button = document.createElement('button');
     button.className = 'secondary history-open';
     button.type = 'button';
@@ -122,37 +165,51 @@ function formatSize(bytes) {
   if (bytes < 1073741824) return (bytes / 1048576).toFixed(1) + ' MB';
   return (bytes / 1073741824).toFixed(2) + ' GB';
 }
-function setFile(file) {
-  if (file && file.size > MAX_FILE_BYTES) {
-    selectedFile = null;
-    $('file').value = '';
-    flash('单个文件不能超过 5 GB，请选择较小的文件。');
-  } else {
-    selectedFile = file || null;
-    if (file) flash('');
-  }
-  $('file-info').textContent = selectedFile
-    ? selectedFile.name + ' · ' + formatSize(selectedFile.size) : '';
-  $('clear-file').hidden = !selectedFile;
-  $('selected-file').hidden = !selectedFile;
+function closePicker() {
+  $('picker-menu').hidden = true;
+  $('pick').setAttribute('aria-expanded', 'false');
 }
-$('pick').onclick = () => $('file').click();
-$('drop').addEventListener('click', event => {
-  if (event.target.closest('button')) return;
-  $('file').click();
+$('pick').onclick = () => {
+  const expand = $('picker-menu').hidden;
+  $('picker-menu').hidden = !expand;
+  $('pick').setAttribute('aria-expanded', String(expand));
+};
+for (const [mode, input] of [['single', 'file'], ['multiple', 'files'], ['folder', 'folder']]) {
+  $('pick-' + mode).onclick = () => {
+    closePicker();
+    $(input).click();
+  };
+  $(input).onchange = () => setFiles($(input).files, mode);
+}
+document.addEventListener('click', event => {
+  if (!$('drop').contains(event.target)) closePicker();
 });
-$('drop').addEventListener('keydown', event => {
-  if (event.target !== $('drop')) return;
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    $('file').click();
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') closePicker();
+});
+function setFiles(files, mode = 'single') {
+  const items = Array.from(files || []);
+  const total = items.reduce((sum, file) => sum + file.size, 0);
+  if (items.length > 500 || total > MAX_FILE_BYTES || items.some(file => file.size > MAX_FILE_BYTES)) {
+    selectedFiles = [];
+    for (const id of ['file', 'files', 'folder']) $(id).value = '';
+    flash(items.length > 500 ? '一次最多选择 500 个文件' : '单次总大小不能超过 5 GB');
+  } else {
+    selectedFiles = items;
+    selectedMode = mode;
+    if (items.length) flash('');
   }
-});
-$('file').onchange = () => setFile($('file').files[0] || null);
-$('clear-file').onclick = event => {
-  event.stopPropagation();
-  $('file').value = '';
-  setFile(null);
+  $('file-info').textContent = selectedFiles.length
+    ? (mode === 'folder' ? '文件夹 · ' : '') +
+      (selectedFiles.length === 1 ? selectedFiles[0].name : selectedFiles.length + ' 个文件') +
+      ' · ' + formatSize(selectedFiles.reduce((sum, file) => sum + file.size, 0))
+    : '';
+  $('clear-file').hidden = !selectedFiles.length;
+  $('selected-file').hidden = !selectedFiles.length;
+}
+$('clear-file').onclick = () => {
+  for (const id of ['file', 'files', 'folder']) $(id).value = '';
+  setFiles([], 'single');
 };
 for (const name of ['dragenter', 'dragover']) {
   $('drop').addEventListener(name, event => {
@@ -167,8 +224,11 @@ for (const name of ['dragleave', 'drop']) {
   });
 }
 $('drop').addEventListener('drop', event => {
-  const file = event.dataTransfer?.files?.[0];
-  if (file) setFile(file);
+  const files = Array.from(event.dataTransfer?.files || []);
+  if (files.length) {
+    closePicker();
+    setFiles(files, files.length > 1 ? 'multiple' : 'single');
+  }
 });
 $('tab-send').onclick = () => pane('send');
 $('tab-get').onclick = () => pane('get');
@@ -207,11 +267,14 @@ function sendForm(form) {
 }
 $('upload').onclick = async () => {
   const text = $('text').value.trim();
-  if (!selectedFile && !text) { flash('请先选择文件，或输入一段文字。'); return; }
-  if (selectedFile && selectedFile.size > MAX_FILE_BYTES) { flash('单个文件不能超过 5 GB'); return; }
+  if (!selectedFiles.length && !text) { flash('请先选择文件，或输入一段文字。'); return; }
+  if (selectedFiles.reduce((sum, file) => sum + file.size, 0) > MAX_FILE_BYTES) { flash('文件总大小不能超过 5 GB'); return; }
   const form = new FormData();
   form.append('ttl', $('ttl').value);
-  if (selectedFile) form.append('file', selectedFile);
+  form.append('selection', selectedMode);
+  for (const file of selectedFiles) {
+    form.append('file', file, selectedMode === 'folder' ? (file.webkitRelativePath || file.name) : file.name);
+  }
   if (text) form.append('text', text);
   const button = $('upload');
   button.disabled = true;
@@ -251,10 +314,35 @@ async function copyText(value, button, successLabel) {
 $('copy-code').onclick = () => copyText($('done-code').textContent, null, '');
 $('copy-link').onclick = () => copyText(pickupUrl, $('copy-link'), '已复制');
 $('copy-public-link').onclick = () => copyText($('copy-public-link').dataset.url, $('copy-public-link'), '已复制');
+
+// On mobile, native share lets the user choose installed WeChat/QQ apps.
+// Desktop browsers cannot silently post into a user's chat; copy is a safe fallback.
+async function shareVia(platform) {
+  const target = platform === 'wechat' ? '微信' : 'QQ';
+  const url = shareUrl || pickupUrl;
+  if (!url) return;
+  if (typeof navigator.share === 'function') {
+    try {
+      await navigator.share({ title: '好奇猴快传', text: '分享给你一个临时文件或文字', url });
+      return;
+    } catch (error) {
+      if (error && error.name === 'AbortError') return;
+    }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    flash('领取链接已复制，请打开' + target + '粘贴发给好友；也可以让好友扫二维码。');
+  } catch {
+    flash('请点击上方“复制领取链接”，再打开' + target + '发给好友。');
+  }
+}
+$('share-wechat').onclick = () => shareVia('wechat');
+$('share-qq').onclick = () => shareVia('qq');
+
 $('again').onclick = () => {
-  $('file').value = '';
+  for (const id of ['file', 'files', 'folder']) $(id).value = '';
   $('text').value = '';
-  setFile(null);
+  setFiles([], 'single');
   pane('send');
 };
 
