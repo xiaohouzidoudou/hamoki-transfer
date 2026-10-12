@@ -3,10 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f5f5f7">
+  <meta name="theme-color" content="#07150f">
   <meta name="description" content="好奇猴快传，让文件传递像呼吸一样简单。上传文件，生成取件码与二维码，手机扫码直接领取。">
   <title>好奇猴快传 · 传文件，就这么简单</title>
   <script src="static/theme.js"></script>
+  <link rel="icon" type="image/webp" href="static/hamoki-avatar.webp">
   <link rel="stylesheet" href="static/style.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js" defer></script>
@@ -16,8 +17,8 @@
 <div class="shell">
   <header class="topbar">
     <a class="brand" href="./" aria-label="好奇猴快传首页">
-      <span class="brand-icon" aria-hidden="true">🐵</span>
-      <span class="brand-name">好奇猴<span>快传</span></span>
+      <span class="brand-icon"><img src="static/hamoki-avatar.webp" alt="" width="48" height="48"></span>
+      <span class="brand-text"><span class="brand-name">好奇猴<span>快传</span></span><small class="brand-tagline">简单 · 快速 · 安全分享</small></span>
     </a>
     <div class="header-actions">
       <label class="theme-switch" for="theme-mode">
@@ -107,28 +108,45 @@
         </section>
 
         <section id="pane-done" class="pane done" aria-label="传送成功" hidden>
-          <div class="done-head">
-            <div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div>
-            <h2 class="done-title">传送成功 · 专属取件码</h2>
+          <div class="success-hero">
+            <div class="hero-copy">
+              <h2 class="done-title">传送成功 <span>· 专属取件码</span></h2>
+              <div class="success-stroke" aria-hidden="true"></div>
+              <p>文件已安全上传，分享给好友即可领取</p>
+            </div>
+            <img class="hero-mascot" src="static/hamoki-avatar.webp" alt="好奇猴探险家" width="128" height="128">
           </div>
-          <div class="code-wrap">
+          <div class="result-card">
+            <div class="section-title"><span class="section-icon">#</span><strong>专属取件码</strong><small>好友在「好奇猴快传」输入即可领取</small></div>
+            <div class="code-wrap">
             <strong id="done-code" class="code"></strong>
             <button id="copy-code" class="copy-code" type="button" aria-label="复制取件码" title="复制取件码">
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h2"/></svg>
             </button>
           </div>
-          <div class="public-link-panel">
-            <span class="public-link-label">公共链接</span>
+            <div class="countdown-row"><div class="countdown-symbol" aria-hidden="true">◷</div><div class="expiry-countdown" data-expiry-countdown data-expires="0" aria-label="文件过期倒计时"><span>过期倒计时</span><strong>等待生成</strong></div><small>超时后文件将自动清理<br>请及时分享给好友</small></div>
+          </div>
+          <div class="share-link-card">
+            <div class="section-title"><span class="section-icon">↗</span><strong>公开领取链接</strong><small>任何人打开链接即可领取</small></div>
+            <div class="public-link-panel">
+            <span class="public-link-label">链接</span>
             <a id="public-link-url" class="public-link-url" href="#" target="_blank" rel="noopener noreferrer"></a>
             <button id="copy-public-link" class="public-link-copy" type="button">复制</button>
           </div>
           <p id="public-link-tip" class="hint">复制给别人即可直接查看或下载，无需输入取件码。</p>
-          <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>打开手机相机扫码领取</span></div>
+          </div>
+          <div class="qr-share-card">
+            <div class="qr-share-info">
+              <div class="section-title"><span class="section-icon qr-icon">▦</span><strong>二维码分享</strong></div>
+              <p>好友用手机扫一扫<br>即可打开领取页面</p>
+            </div>
+            <div class="qr-panel"><img id="done-qr" alt="取件二维码" width="188" height="188"><span>手机扫码领取</span></div>
+          </div>
           <div class="actions">
             <button id="copy-link" class="primary" type="button">复制领取链接</button>
             <button id="again" class="secondary" type="button">再传一个</button>
           </div>
-          <p class="hint">过期自动清理 · <span class="danger-text">最多领取 10 次</span></p>
+          <p class="hint final-hint">◇ 过期自动清理 · <span class="danger-text">最多领取 10 次</span></p>
         </section>
 
         <p id="message" role="status" aria-live="polite" class="message"></p>
