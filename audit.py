@@ -47,20 +47,10 @@ def _secret_file(root: Path, name: str, size: int = 32) -> bytes:
 def setup_audit(app, db, root, limit):
     signing_key = _secret_file(root, ".audit-session-secret")
     signer = TimestampSigner(signing_key, salt="hamoki-audit-login-v1")
-    configured = app.config.get("AUDIT_ADMIN_PASSWORD", "")
-    if not configured:
-        # Unique per installation; intentionally never checked into Git.
-        secret_path = root / ".audit-admin-password"
-        try:
-            fd = os.open(secret_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
-        except FileExistsError:
-            pass
-        else:
-            with os.fdopen(fd, "w", encoding="ascii") as out:
-                out.write(secrets.token_urlsafe(24) + "\n")
-        configured = secret_path.read_text(encoding="ascii").strip()
-    if len(configured) < 16:
-        raise RuntimeError("audit admin password must have at least 16 characters")
+    # Reuse the owner's existing upload-unlock password; no new accounts.
+    # If that password is not configured, viewing audit logs stays disabled.
+    configured = app.config.get("UPLOAD_UNLOCK_PASSWORD", "")
+
     # A password rotation invalidates pre-existing signed sessions.
     admin_proof = hashlib.sha256(configured.encode("utf-8")).hexdigest().encode("ascii")
 
@@ -83,7 +73,7 @@ def setup_audit(app, db, root, limit):
     def signed_in():
         try:
             proof = signer.unsign(request.cookies.get(AUDIT_COOKIE, ""), max_age=12 * 3600)
-            return hmac.compare_digest(proof, admin_proof)
+            return bool(configured) and hmac.compare_digest(proof, admin_proof)
         except (BadSignature, SignatureExpired, ValueError, TypeError):
             return False
 
@@ -191,7 +181,7 @@ def setup_audit(app, db, root, limit):
         csrf()
         limit("audit-admin-login", 5, 3600)
         raw = (request.get_json(silent=True) or {}).get("password")
-        if not isinstance(raw, str) or len(raw) > 256 or not hmac.compare_digest(
+        if not configured or not isinstance(raw, str) or len(raw) > 256 or not hmac.compare_digest(
             raw.encode("utf-8"), configured.encode("utf-8")
         ):
             abort(403, description="管理密码不正确")
