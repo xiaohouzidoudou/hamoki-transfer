@@ -8,7 +8,7 @@ services:
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-}
       MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-5120}
-      TOTAL_LIMIT_MB: ${TOTAL_LIMIT_MB:-10240}
+      TOTAL_LIMIT_MB: ${TOTAL_LIMIT_MB:-15360}
     volumes:
       - ./data:/data
       - ./upload-tmp:/tmp
