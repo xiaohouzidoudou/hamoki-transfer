@@ -7,15 +7,12 @@ const appUrl = path => appRoot + path.replace(/^\/+/, '');
 let selectedFile = null;
 let pickupUrl = '';
 
-const tokenParam = new URLSearchParams(location.hash.substring(1)).get('key');
-if (tokenParam) {
-  sessionStorage.setItem('hamoki_upload_key', tokenParam);
+// Remove obsolete upload keys from earlier private-link versions.
+sessionStorage.removeItem('hamoki_upload_key');
+if (new URLSearchParams(location.hash.substring(1)).has('key')) {
   history.replaceState(null, '', location.pathname + location.search);
 }
-const uploadKey = sessionStorage.getItem('hamoki_upload_key') || '';
-$('send-tip').textContent = uploadKey
-  ? '上传权限已激活 · 文件到期后自动删除'
-  : '使用私密上传链接即可传送 · 领取无需登录';
+$('send-tip').textContent = '无需登录，直接上传 · 文件到期后自动删除';
 
 function flash(message) {
   $('message').textContent = message || '';
@@ -98,7 +95,6 @@ function sendForm(form) {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('POST', appUrl('api/send'));
-    request.setRequestHeader('X-Upload-Key', uploadKey);
     request.upload.onprogress = event => {
       if (!event.lengthComputable) return;
       const percent = Math.round(event.loaded * 100 / event.total);
@@ -121,7 +117,6 @@ function sendForm(form) {
 }
 $('upload').onclick = async () => {
   const text = $('text').value.trim();
-  if (!uploadKey) { flash('请使用私密上传链接打开网页。'); return; }
   if (!selectedFile && !text) { flash('请先选择文件，或输入一段文字。'); return; }
   const form = new FormData();
   form.append('ttl', $('ttl').value);
