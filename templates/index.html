@@ -6,12 +6,25 @@
   <meta name="theme-color" content="#f8fafc">
   <meta name="description" content="无需安装软件，通过网页上传文件、获取取件码和二维码，手机扫码就能领取。">
   <title>好奇猴快传｜扫码即取</title>
+  <script src="/static/theme.js"></script>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/app.js" defer></script>
 </head>
 <body>
 <div class="shell">
-  <header><a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> 好奇猴<b>快传</b></a><span class="label">私人网页快传</span></header>
+  <header>
+    <a class="brand" href="/"><span class="mascot" aria-hidden="true">&#128018;</span> 好奇猴<b>快传</b></a>
+    <div class="header-actions">
+      <span class="label">私人网页快传</span>
+      <label class="theme-switch" for="theme-mode"><span>外观</span>
+        <select id="theme-mode" aria-label="切换网页外观">
+          <option value="auto">跟随系统</option>
+          <option value="light">亮色</option>
+          <option value="dark">暗色</option>
+        </select>
+      </label>
+    </div>
+  </header>
   <div class="hero"><h1>上传文件，扫码即取</h1><p>只要浏览器，电脑和手机都能传。不用安装，不用注册。</p></div>
   <main class="card">
     <div class="tabs" role="tablist">
