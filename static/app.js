@@ -13,7 +13,7 @@ function readSentHistory() {
   try {
     const rows = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
     return Array.isArray(rows) ? rows.filter(row =>
-      row && typeof row.code === 'string' && /^[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12}$/.test(row.code)
+      row && typeof row.code === 'string' && /^(?:[0-9]{4}|[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{12})$/.test(row.code)
     ).slice(0, 60) : [];
   } catch { return []; }
 }
