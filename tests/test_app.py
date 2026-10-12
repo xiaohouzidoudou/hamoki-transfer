@@ -71,6 +71,84 @@ class HamokiTest(unittest.TestCase):
         self.assertIn('attachment', downloaded.headers['Content-Disposition'])
         self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 9)
 
+    def test_multiple_files_zip_and_download(self):
+        response = self.client.post('/api/send', data={
+            'selection': 'multiple',
+            'file': [
+                (io.BytesIO(b'alpha'), 'one.txt'),
+                (io.BytesIO(b'beta'), 'two.txt'),
+            ],
+        })
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json['name'], '2个文件.zip')
+        with self.client.get('/d/' + response.json['code']) as download:
+            self.assertEqual(download.status_code, 200)
+            import zipfile
+            with zipfile.ZipFile(io.BytesIO(download.data)) as archive:
+                self.assertEqual(sorted(archive.namelist()), ['one.txt', 'two.txt'])
+                self.assertEqual(archive.read('one.txt'), b'alpha')
+                self.assertEqual(archive.read('two.txt'), b'beta')
+
+    def test_folder_preserves_structure(self):
+        response = self.client.post('/api/send', data={
+            'selection': 'folder',
+            'file': [
+                (io.BytesIO(b'one'), 'photos/a.jpg'),
+                (io.BytesIO(b'two'), 'photos/sub/b.png'),
+            ],
+        })
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json['name'], 'photos.zip')
+        with self.client.get('/d/' + response.json['code']) as downloaded:
+            import zipfile
+            with zipfile.ZipFile(io.BytesIO(downloaded.data)) as archive:
+                self.assertEqual(sorted(archive.namelist()), ['photos/a.jpg', 'photos/sub/b.png'])
+
+    def test_folder_rejects_unsafe_paths_without_writing_share(self):
+        before = sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3'))
+        count = before.execute('SELECT COUNT(*) FROM shares').fetchone()[0]
+        before.close()
+        result = self.client.post('/api/send', data={
+            'selection': 'folder',
+            'file': [
+                (io.BytesIO(b'one'), 'photos/a.jpg'),
+                (io.BytesIO(b'two'), 'photos/../unsafe.txt'),
+            ],
+        })
+        self.assertEqual(result.status_code, 400)
+        with sqlite3.connect(os.path.join(self.dir.name, 'index.sqlite3')) as con:
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM shares').fetchone()[0], count)
+        from pathlib import Path
+        self.assertEqual(list((Path(self.dir.name) / 'files').iterdir()), [])
+
+    def test_image_preview_does_not_use_claim(self):
+        png = b'\\x89PNG\\r\\n\\x1a\\nsmall-image-fixture'
+        response = self.client.post('/api/send', data={
+            'file': (io.BytesIO(png), 'preview.png'),
+        })
+        self.assertEqual(response.status_code, 201)
+        code = response.json['code']
+        with self.client.get('/api/preview/' + code) as preview:
+            self.assertEqual(preview.status_code, 200)
+            self.assertEqual(preview.data, png)
+            self.assertEqual(preview.mimetype, 'image/png')
+            self.assertIn('nosniff', preview.headers['X-Content-Type-Options'])
+        with self.client.get(response.json['public_path'] + '?preview=1') as preview:
+            self.assertEqual(preview.status_code, 200)
+            self.assertEqual(preview.data, png)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 10)
+        with self.client.get('/d/' + code) as downloaded:
+            self.assertEqual(downloaded.status_code, 200)
+        self.assertEqual(self.client.get('/api/item/' + code).json['remaining'], 9)
+
+    def test_preview_denies_non_image_and_spoofed_extension(self):
+        response = self.client.post('/api/send', data={
+            'file': (io.BytesIO(b'<script>not an image</script>'), 'fake.png'),
+        })
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.client.get('/api/preview/' + response.json['code']).status_code, 404)
+        self.assertEqual(self.client.get(response.json['public_path'] + '?preview=1').status_code, 404)
+
     def test_combined_picture_and_text_one_code(self):
         payload = b'\\x89PNG\\r\\n\\x1a\\nhello'
         result = self.client.post('/api/send', data={
@@ -230,9 +308,16 @@ class HamokiTest(unittest.TestCase):
         self.assertNotIn('取件码已经准备好，扫码即可领取。', html)
         self.assertIn('专属取件码', html)
         self.assertIn('static/countdown.js', html)
-        self.assertIn('单个文件最大 5 GB', html)
+        self.assertIn('单次总大小最大 5 GB', html)
         self.assertIn('最多领取 10 次', html)
         self.assertIn('class="danger-text"', html)
+        self.assertIn('id="picker-menu"', html)
+        self.assertIn('id="files" multiple', html)
+        self.assertIn('id="folder" webkitdirectory', html)
+        self.assertIn('id="share-wechat"', html)
+        self.assertIn('id="share-qq"', html)
+        self.assertIn('id="preview-dialog"', html)
+        self.assertNotIn('4 位英数字取件码（兼容旧码）', html)
 
     def test_public_link_rejects_missing_or_invalid_token(self):
         self.assertEqual(self.client.get('/f/short').status_code, 404)
