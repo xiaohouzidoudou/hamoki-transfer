@@ -38,6 +38,7 @@ function setFile(file) {
   $('file-info').textContent = selectedFile
     ? selectedFile.name + ' · ' + formatSize(selectedFile.size) : '';
   $('clear-file').hidden = !selectedFile;
+  $('selected-file').hidden = !selectedFile;
   if (selectedFile) $('text').value = '';
 }
 $('pick').onclick = () => $('file').click();
@@ -61,13 +62,13 @@ $('clear-file').onclick = event => {
 for (const name of ['dragenter', 'dragover']) {
   $('drop').addEventListener(name, event => {
     event.preventDefault();
-    $('drop').classList.add('drag');
+    $('pick').classList.add('drag');
   });
 }
 for (const name of ['dragleave', 'drop']) {
   $('drop').addEventListener(name, event => {
     event.preventDefault();
-    $('drop').classList.remove('drag');
+    $('pick').classList.remove('drag');
   });
 }
 $('drop').addEventListener('drop', event => {
