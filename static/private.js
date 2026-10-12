@@ -43,6 +43,63 @@ function renderChosenFiles(){
 el('private-files').onchange=()=>{chosenFiles=Array.from(el('private-files').files);renderChosenFiles()};
 el('private-files-clear').onclick=()=>{chosenFiles=[];el('private-files').value='';renderChosenFiles()};
 
+const privateDropZone=el('private-send-zone');
+let fileDragDepth=0;
+function hasDraggedFiles(event){
+ return Array.from(event.dataTransfer?.types||[]).includes('Files');
+}
+function clearDragHighlight(){
+ fileDragDepth=0;
+ privateDropZone.classList.remove('is-dragging');
+}
+privateDropZone.addEventListener('dragenter',event=>{
+ if(!hasDraggedFiles(event))return;
+ event.preventDefault();
+ fileDragDepth++;
+ privateDropZone.classList.add('is-dragging');
+});
+privateDropZone.addEventListener('dragover',event=>{
+ if(!hasDraggedFiles(event))return;
+ event.preventDefault();
+ event.dataTransfer.dropEffect='copy';
+ privateDropZone.classList.add('is-dragging');
+});
+privateDropZone.addEventListener('dragleave',event=>{
+ if(!hasDraggedFiles(event))return;
+ fileDragDepth=Math.max(0,fileDragDepth-1);
+ if(!fileDragDepth)privateDropZone.classList.remove('is-dragging');
+});
+privateDropZone.addEventListener('drop',event=>{
+ if(!hasDraggedFiles(event))return;
+ event.preventDefault();
+ clearDragHighlight();
+ const incoming=Array.from(event.dataTransfer?.files||[]);
+ if(!incoming.length)return message('请拖动文件或图片到发送区域');
+ const names=new Set(chosenFiles.map(file=>file.name));
+ const added=incoming.filter(file=>!names.has(file.name)&&!!names.add(file.name));
+ if(!added.length)return message('这些文件已添加，无需重复选择');
+ const totalFiles=chosenFiles.concat(added);
+ if(totalFiles.length>500)return message('一次最多上传500个文件');
+ if(totalFiles.reduce((sum,file)=>sum+file.size,0)>5*1024*1024*1024)return message('文件总大小不能超过5 GB');
+ chosenFiles=totalFiles;
+ // The actual file objects stay in chosenFiles even if the input is cleared.
+ el('private-files').value='';
+ renderChosenFiles();
+ message('已添加'+added.length+'个文件，点击发送即可上传');
+});
+// Prevent accidentally leaving the transfer site if the drop misses the box.
+document.addEventListener('dragover',event=>{
+ if(hasDraggedFiles(event))event.preventDefault();
+});
+document.addEventListener('drop',event=>{
+ if(hasDraggedFiles(event)){
+  event.preventDefault();
+  clearDragHighlight();
+ }
+});
+window.addEventListener('blur',clearDragHighlight);
+
+
 el('private-send').onclick=async()=>{
  const text=el('private-text').value.trim(),files=chosenFiles.slice();
  if(!text&&!files.length)return message('请输入文字或选择文件');
