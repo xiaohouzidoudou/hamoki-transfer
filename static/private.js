@@ -100,6 +100,21 @@ document.addEventListener('drop',event=>{
 window.addEventListener('blur',clearDragHighlight);
 
 
+// A deliberate paste in the private text area sends immediately.
+ // Ordinary typing, selection or file drop still needs the Send button.
+el('private-text').addEventListener('paste',event=>{
+ const clip=event.clipboardData;
+ if(!paired || !clip || (clip.files&&clip.files.length) || chosenFiles.length)return;
+ const plain=clip.getData('text/plain');
+ if(!plain || !plain.trim())return;
+ if(new TextEncoder().encode(plain.trim()).length>65536){
+   message('粘贴文字不能超过64KB');return;
+ }
+ if(el('private-send').disabled){message('上一条还在发送，请稍后重试');return}
+ event.preventDefault();
+ el('private-text').value=plain;
+ el('private-send').click();
+});
 el('private-send').onclick=async()=>{
  const text=el('private-text').value.trim(),files=chosenFiles.slice();
  if(!text&&!files.length)return message('请输入文字或选择文件');
@@ -160,15 +175,45 @@ async function loadInviteInline(){
 async function openSettings(){
  el('private-settings').hidden=false;
  // Render code and device list independently so one failure cannot hide the other.
- await Promise.allSettled([loadInviteInline(),showDevices().catch(e=>message('设备列表读取失败：'+e.message))]);
+ await Promise.allSettled([loadInviteInline(),showDevices().catch(e=>message('设备列表读取失败：'+e.message)),loadAgents().catch(e=>message('AI 工具列表读取失败：'+e.message))]);
 }
+async function loadAgents(){
+ const data=await json(await api('agent/list'));
+ const target=el('private-agent-list');target.replaceChildren();
+ if(!data.agents.length){const hint=document.createElement('p');hint.className='private-muted';hint.textContent='还没有 AI 接入令牌';target.append(hint);return;}
+ for(const row of data.agents){
+  const line=document.createElement('div');line.className='private-device';
+  const name=document.createElement('span');name.textContent=row.label;
+  const revoke=document.createElement('button');revoke.type='button';revoke.className='private-danger';revoke.textContent='撤销';
+  revoke.onclick=async()=>{
+   try{await json(await mutation('agent/revoke',{id:row.id}));await loadAgents();message('AI 令牌已撤销')}
+   catch(e){message(e.message)}
+  };
+  line.append(name,revoke);target.append(line);
+ }
+}
+el('private-agent-create').onclick=async()=>{
+ const btn=el('private-agent-create');btn.disabled=true;
+ try{
+  const result=await json(await mutation('agent/create',{label:'AI 助手'}));
+  el('private-agent-secret').textContent=result.token;
+  el('private-agent-created').hidden=false;
+  await loadAgents();message('令牌创建成功，请复制并安全保存')
+ }catch(e){message(e.message)}
+ finally{btn.disabled=false}
+};
+el('private-agent-copy').onclick=async()=>{
+ const token=el('private-agent-secret').textContent;
+ try{await navigator.clipboard.writeText(token);message('AI 令牌已复制，请勿发送到公开聊天')}
+ catch{message('复制失败，请手动选择令牌并复制')}
+};
 el('private-settings-toggle').onclick=openSettings;
 el('private-invite-copy').onclick=async()=>{
  const code=el('private-invite-display').textContent;
  try{await navigator.clipboard.writeText(code);message('配对码已复制')}
  catch{message('复制失败，请长按配对码手动复制')}
 };
-el('private-settings-close').onclick=()=>el('private-settings').hidden=true;
+el('private-settings-close').onclick=()=>{el('private-settings').hidden=true;el('private-agent-secret').textContent='';el('private-agent-created').hidden=true};
 async function revoke(id){if(!confirm('确定解除这个设备的绑定？'))return;try{await json(await mutation('revoke',{device_id:id}));await boot();el('private-settings-toggle').click()}catch(e){message(e.message)}}
 el('private-leave').onclick=()=>{if(confirm('解除本机绑定？你需要用原配对码重新加入。'))revokeOwn()};
 async function revokeOwn(){try{const d=await json(await api('me'));await json(await mutation('revoke',{device_id:d.device_id}));paired=false;current='';await boot();message('本机已解除绑定')}catch(e){message(e.message)}}

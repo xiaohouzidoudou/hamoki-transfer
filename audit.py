@@ -124,6 +124,14 @@ def setup_audit(app, db, root, limit):
         return mapping.get(route, "其他请求"), route
 
     def paired_device(con):
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer hka_") and len(auth_header) == 75:
+            candidate = auth_header[len("Bearer "):]
+            if re.fullmatch(r"hka_[a-f0-9]{64}", candidate):
+                hashed = hashlib.sha256(candidate.encode("ascii")).hexdigest()
+                agent = con.execute("SELECT label FROM private_agents WHERE token_hash=?", (hashed,)).fetchone()
+                if agent:
+                    return "AI: " + str(agent["label"])[:24]
         token = request.cookies.get("hamoki_private_device", "")
         if len(token) != 64 or not re.fullmatch("[0-9a-f]{64}", token):
             return ""
