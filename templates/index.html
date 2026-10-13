@@ -15,8 +15,8 @@
   <link rel="stylesheet" href="static/icons.css">
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js?v=20261013-quota-1" defer></script>
-  <script src="static/private.js?v=20261012-drag-1" defer></script>
-  <link rel="stylesheet" href="static/private.css?v=20261013-quota-1">
+  <script src="static/private.js?v=20261013-ai-1" defer></script>
+  <link rel="stylesheet" href="static/private.css?v=20261013-ai-1">
 </head>
 <body>
 <div class="page-glow" aria-hidden="true"></div>
@@ -68,14 +68,21 @@
     <button id="private-copy" class="primary full" type="button" hidden>复制内容</button>
   </section>
   <section id="private-send-zone" class="private-panel private-send-zone"><div class="private-section-heading"><h2>发送新内容</h2><small>发送后覆盖上一条</small></div>
-    <textarea id="private-text" rows="3" placeholder="粘贴文字，也可以把文件拖到这个区域…"></textarea>
+    <textarea id="private-text" rows="3" placeholder="粘贴文字即自动发送；手动输入仍可点击发送…"></textarea><p class="private-muted" style="margin:2px 0 8px">粘贴文字自动发送 · 选择文件后仍需点击发送</p>
     <div class="private-drop-subtitle">拖拽图片或文件到这里，也可以点击「选择文件」</div>
     <div class="private-send-tools"><label for="private-files" class="secondary private-file-label"><svg class="ui-icon" aria-hidden="true"><use href="static/icons.svg#file"></use></svg> 选择文件</label><input type="file" id="private-files" multiple hidden><button id="private-send" class="primary" type="button">发送</button></div>
     <div id="private-file-selection" class="private-file-selection" hidden><div class="private-file-selection-head"><strong>已选择文件</strong><button id="private-files-clear" class="private-text-button" type="button">全部移除</button></div><div id="private-selected-list"></div></div><p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
   </section>
   <div id="private-settings" class="private-panel" hidden><div class="private-section-heading"><h2>绑定设备</h2><button class="private-text-button" id="private-settings-close" type="button">收起</button></div>
     <p class="private-muted">绑定长期有效；如果浏览器数据被清除，可以使用下方当前配对码重新加入。</p>
-    <div class="private-invite-panel"><strong>添加其他设备</strong><p class="private-muted">新设备打开快传网站后，输入下面的配对码即可加入。请勿发给陌生人。</p><div class="private-invite-box"><code id="private-invite-display" aria-live="polite">正在读取配对码…</code><button id="private-invite-copy" type="button" class="secondary" hidden>复制</button></div><p id="private-invite-notice" class="private-muted"></p></div><div id="private-device-list"></div><button id="private-leave" class="secondary" type="button">解除本机绑定</button>
+    <div class="private-invite-panel"><strong>添加其他设备</strong><p class="private-muted">新设备打开快传网站后，输入下面的配对码即可加入。请勿发给陌生人。</p><div class="private-invite-box"><code id="private-invite-display" aria-live="polite">正在读取配对码…</code><button id="private-invite-copy" type="button" class="secondary" hidden>复制</button></div><p id="private-invite-notice" class="private-muted"></p></div><div id="private-device-list"></div>
+    <div class="private-ai-panel">
+      <div class="private-section-heading"><h3>AI 工具接入</h3><button id="private-agent-create" class="secondary" type="button">生成接入令牌</button></div>
+      <p class="private-muted">给 AgentDock、MCP 或其他 AI 工具使用。可以发送文字、文件、读取最新内容，不能管理设备。令牌只显示一次，请勿公开。</p>
+      <div id="private-agent-created" hidden><code id="private-agent-secret"></code><button id="private-agent-copy" class="secondary" type="button">复制令牌</button><p class="private-muted">请保存在你自己的 AI 工具配置中，关闭页面后无法再次查看。</p></div>
+      <div id="private-agent-list"></div>
+    </div>
+    <button id="private-leave" class="secondary" type="button">解除本机绑定</button>
   </div>
 </div>
 <p id="private-message" role="status" aria-live="polite" class="private-message"></p>
