@@ -360,7 +360,8 @@ def create_app(test_config=None):
             with LOCK, db() as con:
                 used = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires > ?", (now,)).fetchone()[0]
                 private_used = con.execute("SELECT COALESCE(SUM(size),0) FROM private_rooms WHERE filekey != ''").fetchone()[0]
-                if kind == 'file' and used + private_used + size > app.config['TOTAL_BYTES']:
+                history_used = con.execute("SELECT COALESCE(SUM(size),0) FROM private_history WHERE filekey != ''").fetchone()[0]
+                if kind == 'file' and used + private_used + history_used + size > app.config['TOTAL_BYTES']:
                     raise InsufficientStorage()
                 if not guest_bypass:
                     already_used = guest_used(con, now, visitor_hash)

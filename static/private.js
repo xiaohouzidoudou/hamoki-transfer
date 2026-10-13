@@ -14,6 +14,40 @@ async function boot(){
  if(paired)await refresh(true);
  }catch(e){message(e.message)}
 }
+async function renderHistory(){
+ const history=await json(await api('history'));
+ const items=Array.isArray(history.items)?history.items:[];
+ const section=el('private-history-section'),list=el('private-history-list');
+ list.replaceChildren();
+ section.hidden=!items.length;
+ for(const item of items){
+  const card=document.createElement('div');card.className='private-history-item';
+  const head=document.createElement('div');head.className='private-history-head';
+  const timestamp=document.createElement('small');
+  timestamp.textContent=(item.sender||'其他设备')+' · '+new Date(item.updated*1000).toLocaleString('zh-CN');
+  head.append(timestamp);card.append(head);
+  if(item.has_text){
+   const content=document.createElement('div');content.className='private-history-text';
+   content.textContent=item.text;card.append(content);
+   const copy=document.createElement('button');copy.type='button';copy.className='secondary private-history-copy';copy.textContent='复制';
+   copy.onclick=async()=>{
+    try{await navigator.clipboard.writeText(item.text);message('历史文字已复制')}
+    catch{message('复制失败，请长按文字手动复制')}
+   };
+   card.append(copy);
+  }
+  if(item.has_file){
+   const fileRow=document.createElement('div');fileRow.className='private-history-file';
+   const filename=document.createElement('span');
+   filename.textContent=item.filename+' · '+(item.size/1024/1024).toFixed(2)+' MB';
+   const download=document.createElement('a');download.className='secondary';
+   download.href='api/private/history/file/'+encodeURIComponent(item.id);
+   download.textContent='下载';
+   fileRow.append(filename,download);card.append(fileRow);
+  }
+  list.append(card);
+ }
+}
 async function refresh(force=false){
  if(!paired||(!privateActive()&&!force))return;
  try{const data=await json(await api('latest'));if(!force&&data.revision===current)return;
@@ -23,6 +57,7 @@ async function refresh(force=false){
  el('private-copy').hidden=!data.has_text;
  el('private-file-row').hidden=!data.has_file;
  if(data.has_file)el('private-filename').textContent=data.filename+' · '+(data.size/1024/1024).toFixed(2)+' MB';
+ await renderHistory();
  }catch(e){if(!ready)return;message(e.message)}
 }
 el('private-create').onclick=async()=>{try{await json(await mutation('create',{label:'我的设备'}));paired=true;await boot();await openSettings();message('创建成功，配对码已在设备管理中显示。')}catch(e){message(e.message)}};

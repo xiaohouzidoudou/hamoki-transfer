@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import os
+import re
 from pathlib import Path
 import secrets
 import sqlite3
@@ -11,10 +12,17 @@ import time
 import zipfile
 
 from flask import abort, jsonify, make_response, request, send_file
+from werkzeug.exceptions import HTTPException
 
 COOKIE = "hamoki_private_device"
 CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 COOKIE_AGE = 400 * 86400
+
+
+class PrivateStorageFull(HTTPException):
+    code = 507
+    description = "服务器剩余存储空间不足"
+
 
 
 def digest(value):
@@ -66,6 +74,17 @@ def setup_private(app, db, files, lock, limit):
             created INTEGER NOT NULL,
             seen INTEGER NOT NULL
         )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS private_history (
+            id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL,
+            body TEXT NOT NULL DEFAULT '',
+            filename TEXT NOT NULL DEFAULT '',
+            filekey TEXT NOT NULL DEFAULT '',
+            size INTEGER NOT NULL DEFAULT 0,
+            updated INTEGER NOT NULL DEFAULT 0,
+            sender TEXT NOT NULL DEFAULT ''
+        )""")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_private_history_room ON private_history(room_id)")
         con.execute("CREATE INDEX IF NOT EXISTS idx_private_devices_room ON private_devices(room_id)")
         con.execute("""CREATE TABLE IF NOT EXISTS private_agents (
             id TEXT PRIMARY KEY,
@@ -237,6 +256,44 @@ def setup_private(app, db, files, lock, limit):
             self_sent=room["sender"] == device["id"]
         )
 
+    @app.get("/api/private/history")
+    def private_history():
+        device = auth(allow_agent=True)
+        with db() as con:
+            rows = con.execute(
+                """SELECT h.id,h.body,h.filename,h.filekey,h.size,h.updated,
+                          COALESCE(d.label,a.label,'其他设备') AS sender
+                   FROM private_history h
+                   LEFT JOIN private_devices d ON d.id=h.sender
+                   LEFT JOIN private_agents a ON a.id=h.sender
+                   WHERE h.room_id=? ORDER BY h.rowid DESC LIMIT 2""",
+                (device["room_id"],)
+            ).fetchall()
+        return jsonify(items=[
+            {"id": row["id"], "text": row["body"], "has_text": bool(row["body"]),
+             "filename": row["filename"], "has_file": bool(row["filekey"]),
+             "size": row["size"], "updated": row["updated"], "sender": row["sender"]}
+            for row in rows
+        ])
+
+    @app.get("/api/private/history/file/<entry_id>")
+    def private_history_file(entry_id):
+        device = auth(allow_agent=True)
+        if not re.fullmatch(r"[0-9a-f]{24}", entry_id):
+            abort(404)
+        with db() as con:
+            row = con.execute(
+                "SELECT filename,filekey FROM private_history WHERE id=? AND room_id=?",
+                (entry_id, device["room_id"])
+            ).fetchone()
+        if not row or not row["filekey"]:
+            abort(404)
+        file_path = storage / row["filekey"]
+        if not file_path.is_file():
+            abort(404)
+        return send_file(file_path, as_attachment=True, mimetype="application/octet-stream",
+                         download_name=row["filename"], max_age=0)
+
     @app.post("/api/private/send")
     def private_send():
         guard()
@@ -286,22 +343,51 @@ def setup_private(app, db, files, lock, limit):
                 if size < 1 or size > app.config["MAX_FILE_BYTES"]:
                     abort(413, description="文件大小不正确或超过限制")
             now = int(time.time())
-            old_key = ""
+            # Preserve the old latest as history, keeping at most two prior items.
+            # History file bytes count against the same 10 GiB shared capacity.
+            stale_keys = []
             with lock, db() as con:
                 room = con.execute("SELECT * FROM private_rooms WHERE id=?", (device["room_id"],)).fetchone()
                 if room is None:
                     abort(401, description="配对空间不存在")
-                public_bytes = con.execute("SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires>?", (now,)).fetchone()[0]
-                private_bytes = con.execute("SELECT COALESCE(SUM(size),0) FROM private_rooms WHERE filekey!=''").fetchone()[0]
-                if public_bytes + private_bytes - room["size"] + size > app.config["TOTAL_BYTES"]:
-                    abort(507, description="服务器剩余存储空间不足")
-                old_key = room["filekey"]
+                existing = con.execute(
+                    "SELECT id,filekey,size FROM private_history WHERE room_id=? ORDER BY rowid DESC",
+                    (device["room_id"],)
+                ).fetchall()
+                keep_old = 1 if room["revision"] else 2
+                stale = existing[keep_old:]
+                stale_keys = [row["filekey"] for row in stale if row["filekey"]]
+                removed_bytes = sum(row["size"] for row in stale)
+                public_bytes = con.execute(
+                    "SELECT COALESCE(SUM(size),0) FROM shares WHERE kind='file' AND expires>?",
+                    (now,)
+                ).fetchone()[0]
+                private_bytes = con.execute(
+                    "SELECT COALESCE(SUM(size),0) FROM private_rooms WHERE filekey!=''"
+                ).fetchone()[0]
+                history_bytes = con.execute(
+                    "SELECT COALESCE(SUM(size),0) FROM private_history WHERE filekey!=''"
+                ).fetchone()[0]
+                if public_bytes + private_bytes + history_bytes - removed_bytes + size > app.config["TOTAL_BYTES"]:
+                    raise PrivateStorageFull()
                 if pending:
                     os.replace(pending, storage / new_key)
-                con.execute("""UPDATE private_rooms SET body=?,filename=?,filekey=?,size=?,revision=?,updated=?,sender=?
-                               WHERE id=?""",
-                            (body, name, new_key, size, secrets.token_hex(12), now, device["id"], device["room_id"]))
-            if old_key:
+                if room["revision"]:
+                    con.execute(
+                        """INSERT INTO private_history
+                           (id,room_id,body,filename,filekey,size,updated,sender)
+                           VALUES (?,?,?,?,?,?,?,?)""",
+                        (room["revision"], room["id"], room["body"], room["filename"],
+                         room["filekey"], room["size"], room["updated"], room["sender"])
+                    )
+                for item in stale:
+                    con.execute("DELETE FROM private_history WHERE id=?", (item["id"],))
+                con.execute(
+                    """UPDATE private_rooms SET body=?,filename=?,filekey=?,size=?,revision=?,updated=?,sender=?
+                       WHERE id=?""",
+                    (body, name, new_key, size, secrets.token_hex(12), now, device["id"], device["room_id"])
+                )
+            for old_key in stale_keys:
                 (storage / old_key).unlink(missing_ok=True)
             return jsonify(ok=True), 201
         finally:

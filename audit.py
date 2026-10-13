@@ -23,7 +23,7 @@ AUDIT_COOKIE = "hamoki_audit_admin"
 MAX_RECORDS = 25000
 RETENTION = 30 * 86400
 EXCLUDED = {"/health", "/favicon.ico", "/api/upload/quota",
-            "/api/private/latest", "/api/private/me", "/api/private/invite",
+            "/api/private/latest", "/api/private/history", "/api/private/me", "/api/private/invite",
             "/api/private/devices", "/api/admin/summary", "/api/admin/events"}
 
 
@@ -104,6 +104,7 @@ def setup_audit(app, db, root, limit):
             "/api/private/join": "设备配对",
             "/api/private/send": "私人发送",
             "/api/private/file": "私人文件下载",
+            "/api/private/history/file/<entry_id>": "私人历史文件下载",
             "/api/private/rename": "设备改名",
             "/api/private/revoke": "设备解绑",
             "/api/private/invite/reissue": "更新配对码",
