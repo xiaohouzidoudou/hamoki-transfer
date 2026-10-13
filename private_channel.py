@@ -67,6 +67,15 @@ def setup_private(app, db, files, lock, limit):
             seen INTEGER NOT NULL
         )""")
         con.execute("CREATE INDEX IF NOT EXISTS idx_private_devices_room ON private_devices(room_id)")
+        con.execute("""CREATE TABLE IF NOT EXISTS private_agents (
+            id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL,
+            label TEXT NOT NULL,
+            created INTEGER NOT NULL,
+            seen INTEGER NOT NULL
+        )""")
+        con.execute("CREATE INDEX IF NOT EXISTS idx_private_agents_room ON private_agents(room_id)")
         # Existing rooms stored ONLY a one-way invite hash; never pretend to
         # recover the original code. Re-issue one only on an explicit request.
         room_cols = {row["name"] for row in con.execute("PRAGMA table_info(private_rooms)")}
@@ -81,7 +90,23 @@ def setup_private(app, db, files, lock, limit):
         if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
             abort(403, description="请求来源不正确")
 
-    def auth():
+    def auth(allow_agent=False):
+        authorization = request.headers.get("Authorization", "")
+        if authorization:
+            if not allow_agent or not authorization.startswith("Bearer hka_"):
+                abort(401, description="此令牌无权管理配对设备")
+            token = authorization[11:]  # remove 'Bearer hka_' prefix
+            if len(token) != 64 or any(c not in "0123456789abcdef" for c in token):
+                abort(401, description="AI 访问令牌无效")
+            with db() as con:
+                agent = con.execute("SELECT * FROM private_agents WHERE token_hash=?",
+                                    (digest("hka_" + token),)).fetchone()
+                if agent:
+                    con.execute("UPDATE private_agents SET seen=? WHERE id=?",
+                                (int(time.time()), agent["id"]))
+            if agent is None:
+                abort(401, description="AI 访问令牌已失效或被撤销")
+            return agent
         token = request.cookies.get(COOKIE, "")
         if len(token) != 64 or any(ch not in "0123456789abcdef" for ch in token):
             abort(401, description="设备未配对")
@@ -193,11 +218,15 @@ def setup_private(app, db, files, lock, limit):
 
     @app.get("/api/private/latest")
     def private_latest():
-        device = auth()
+        device = auth(allow_agent=True)
         with db() as con:
             room = con.execute("SELECT body,filename,filekey,size,revision,updated,sender FROM private_rooms WHERE id=?",
                                (device["room_id"],)).fetchone()
-            sender = con.execute("SELECT label FROM private_devices WHERE id=?", (room["sender"],)).fetchone() if room else None
+            sender = None
+            if room:
+                sender = con.execute("SELECT label FROM private_devices WHERE id=?", (room["sender"],)).fetchone()
+                if sender is None:
+                    sender = con.execute("SELECT label FROM private_agents WHERE id=?", (room["sender"],)).fetchone()
         if room is None:
             abort(404)
         return jsonify(
@@ -211,7 +240,7 @@ def setup_private(app, db, files, lock, limit):
     @app.post("/api/private/send")
     def private_send():
         guard()
-        device = auth()
+        device = auth(allow_agent=True)
         limit("private-send-" + device["id"], 20, 60)
         body = request.form.get("text", "").strip()
         uploads = [item for item in request.files.getlist("file") if item.filename]
@@ -281,7 +310,7 @@ def setup_private(app, db, files, lock, limit):
 
     @app.get("/api/private/file")
     def private_file():
-        device = auth()
+        device = auth(allow_agent=True)
         with db() as con:
             room = con.execute("SELECT filename,filekey FROM private_rooms WHERE id=?", (device["room_id"],)).fetchone()
         if not room or not room["filekey"]:
@@ -292,6 +321,59 @@ def setup_private(app, db, files, lock, limit):
         # Never serve uploaded files as active HTML or inline SVG.
         return send_file(file_path, as_attachment=True, mimetype="application/octet-stream",
                          download_name=room["filename"], max_age=0)
+
+    @app.get("/api/private/agent/list")
+    def private_agent_list():
+        device = auth()
+        with db() as con:
+            agents = con.execute(
+                "SELECT id,label,created,seen FROM private_agents WHERE room_id=? ORDER BY created",
+                (device["room_id"],)
+            ).fetchall()
+        return jsonify(agents=[dict(agent) for agent in agents])
+
+    @app.post("/api/private/agent/create")
+    def private_agent_create():
+        guard()
+        device = auth()  # Browser pairing required; a bearer token may not create more tokens.
+        limit("agent-token-create-" + device["id"], 5, 3600)
+        payload = request.get_json(silent=True) or {}
+        label = payload.get("label", "AI 工具")
+        if (not isinstance(label, str) or not 1 <= len(label.strip()) <= 24
+                or any(ord(c) < 32 or ord(c) == 127 for c in label)):
+            abort(400, description="AI 工具名称需为1到24个字符")
+        label = label.strip()
+        with lock, db() as con:
+            count = con.execute("SELECT COUNT(*) FROM private_agents WHERE room_id=?",
+                                (device["room_id"],)).fetchone()[0]
+            if count >= 5:
+                abort(409, description="最多创建5个 AI 工具令牌，请先撤销旧令牌")
+            new_id = secrets.token_hex(12)
+            token = "hka_" + secrets.token_hex(32)
+            now = int(time.time())
+            con.execute(
+                "INSERT INTO private_agents VALUES (?,?,?,?,?,?)",
+                (new_id, device["room_id"], digest(token), label, now, now)
+            )
+        # One-time display: never expose plaintext token again in list or logs.
+        return jsonify(ok=True, id=new_id, label=label, token=token), 201
+
+    @app.post("/api/private/agent/revoke")
+    def private_agent_revoke():
+        guard()
+        device = auth()
+        wanted = (request.get_json(silent=True) or {}).get("id", "")
+        if not isinstance(wanted, str) or len(wanted) != 24 or any(
+                c not in "0123456789abcdef" for c in wanted):
+            abort(400, description="AI 令牌标识不正确")
+        with lock, db() as con:
+            cur = con.execute(
+                "DELETE FROM private_agents WHERE id=? AND room_id=?",
+                (wanted, device["room_id"])
+            )
+        if cur.rowcount != 1:
+            abort(404, description="AI 工具令牌不存在")
+        return jsonify(ok=True)
 
     @app.get("/api/private/devices")
     def private_devices():
