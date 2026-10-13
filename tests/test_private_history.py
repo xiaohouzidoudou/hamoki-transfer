@@ -108,6 +108,15 @@ class PrivateHistoryTests(unittest.TestCase):
         self.assertEqual(prior[0]["text"],"手机要复制第一段")
         self.assertEqual(prior[0]["sender"],"电脑")
 
+    def test_public_storage_quota_includes_private_history(self):
+        self.assertEqual(self.send_file(self.pc,b"aaaa","a.txt").status_code,201)
+        self.assertEqual(self.send_file(self.pc,b"bbbb","b.txt").status_code,201)
+        # Latest 4 bytes + previous private file 4 bytes = 8 bytes.
+        public = self.app.test_client()
+        self.assertEqual(public.post("/api/send",data={"file":(io.BytesIO(b"xx"),"public.txt")}).status_code,201)
+        self.assertEqual(public.post("/api/send",data={"file":(io.BytesIO(b"yy"),"overflow.txt")}).status_code,507)
+        self.assertEqual(len(self.history(self.pc).json["items"]),1)
+
     def test_ui_has_copy_buttons_and_new_history_fetch(self):
         html=self.pc.get("/").data.decode("utf-8")
         self.assertIn('id="private-history-section"',html)
