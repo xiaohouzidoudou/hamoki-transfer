@@ -1,12 +1,17 @@
-# 好奇猴快传 v1.1.0 · 公开上传防滥用
+# 好奇猴快传 v1.2.0 · AI 接入与访问日志
 
-本次针对公开分享增加基础防滥用保护，私人快传继续保持原有操作习惯和功能。
+本次升级让好奇猴快传可以被 AI 工具调用，同时保持原有网页操作方式。
 
-- **普通访客上传限制**：每个 IP 在滚动24小时内，累计公开上传最多1 GiB。
-- **上传口令解锁**：访客超过限制时可在「寄文件」页面输入站长设定的口令。验证成功后的浏览器24小时内免每日访客额度。
-- **总存储配额**：默认改为10 GiB，公开分享与私人空间共用总额。
-- **保持不变**：单次最高5 GiB、公开分享最多10次领取及1/3/7天有效期；私人配对设备双向快传不计入访客日限额。
+- **AI 接入**：私人快传设备管理可创建/撤销 AI 接入令牌；AI 可发送文字、文件、读取最新内容，不得管理配对码和设备。
+- **通用 MCP / AgentDock**：仓库 `integrations/hamoki-private-ai` 包含跨平台 Python CLI、MCP stdio 服务和使用指南，不限 AI 模型和客户端。
+- **粘贴即发送**：私人快传文字框粘贴文字就自动发送；普通输入及文件选择仍点击发送。
+- **访问日志**：页脚新增按日期查看访问 IP、操作和失败状态的日志页，使用已有上传口令查看。
+- **原有保护不变**：公开分享每份最多 10 次领取；访客每 IP 滚动24小时最多 1 GiB 公开上传，总容量默认 10 GiB。
 
-下载 **Source code (zip)** 或 **Source code (tar.gz)** 可自行部署。详见 [README](https://github.com/xiaohouzidoudou/hamoki-transfer) 和 [部署指南](https://github.com/xiaohouzidoudou/hamoki-transfer/blob/main/docs/DEPLOYMENT.md)。
+### 如何给 AI 授权？
 
-站长必须在自己的服务器 `.env` 内配置 `UPLOAD_UNLOCK_PASSWORD`，公开模板不包含真实密码。共享 IP 和更换 IP 可影响按 IP 限额效果；这不是严格账号额度或带宽计费系统。
+在已配对设备进入「设备管理 → AI 工具接入」，生成一次性可复制的令牌，再在自己的 AI 客户端环境设置 `HAMOKI_BASE_URL` 与 `HAMOKI_AGENT_TOKEN`。**不要把实际令牌或私人域名凭证提交到 GitHub。**
+
+文档：[项目 README](https://github.com/xiaohouzidoudou/hamoki-transfer) · [AI 接入教程](https://github.com/xiaohouzidoudou/hamoki-transfer/tree/main/integrations/hamoki-private-ai)
+
+**限制**：电脑锁屏时只要后台 Agent 在线且有权限，仍能发送文件；睡眠/关机时无法使用。AI 工具不自动读取未授权剪贴板、软件窗口或推送手机后台通知。
