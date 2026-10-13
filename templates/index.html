@@ -16,7 +16,7 @@
   <script src="static/countdown.js" defer></script>
   <script src="static/app.js?v=20261013-quota-1" defer></script>
   <script src="static/private.js?v=20261013-history-compact-1" defer></script>
-  <link rel="stylesheet" href="static/private.css?v=20261013-history-compact-1">
+  <link rel="stylesheet" href="static/private.css?v=20261013-history-compact-2">
 </head>
 <body>
 <div class="page-glow" aria-hidden="true"></div>
@@ -72,8 +72,7 @@
     <div id="private-history-list" class="private-history-list"></div>
   </section>
   <section id="private-send-zone" class="private-panel private-send-zone"><div class="private-section-heading"><h2>发送新内容</h2><small>发送后保留最近两条历史</small></div>
-    <textarea id="private-text" rows="3" placeholder="粘贴文字即自动发送；手动输入仍可点击发送…"></textarea><p class="private-muted" style="margin:2px 0 8px">粘贴文字自动发送 · 选择文件后仍需点击发送</p>
-    <div class="private-drop-subtitle">拖拽图片或文件到这里，也可以点击「选择文件」</div>
+    <textarea id="private-text" rows="3" placeholder="粘贴文字即自动发送；手动输入仍可点击发送…"></textarea>
     <div class="private-send-tools"><label for="private-files" class="secondary private-file-label"><svg class="ui-icon" aria-hidden="true"><use href="static/icons.svg#file"></use></svg> 选择文件</label><input type="file" id="private-files" multiple hidden><button id="private-send" class="primary" type="button">发送</button></div>
     <div id="private-file-selection" class="private-file-selection" hidden><div class="private-file-selection-head"><strong>已选择文件</strong><button id="private-files-clear" class="private-text-button" type="button">全部移除</button></div><div id="private-selected-list"></div></div><p id="private-file-info" class="private-muted"></p><p id="private-progress" class="private-muted" hidden>正在上传，请勿关闭页面…</p>
   </section>
