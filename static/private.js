@@ -25,16 +25,21 @@ async function renderHistory(){
   const head=document.createElement('div');head.className='private-history-head';
   const timestamp=document.createElement('small');
   timestamp.textContent=(item.sender||'其他设备')+' · '+new Date(item.updated*1000).toLocaleString('zh-CN');
-  head.append(timestamp);card.append(head);
+  head.append(timestamp);
   if(item.has_text){
-   const content=document.createElement('div');content.className='private-history-text';
-   content.textContent=item.text;card.append(content);
    const copy=document.createElement('button');copy.type='button';copy.className='secondary private-history-copy';copy.textContent='复制';
+   copy.setAttribute('aria-label','复制历史文字');
+   copy.innerHTML='<svg class="ui-icon" aria-hidden="true" focusable="false"><use href="static/icons.svg#copy"></use></svg>复制';
    copy.onclick=async()=>{
     try{await navigator.clipboard.writeText(item.text);message('历史文字已复制')}
     catch{message('复制失败，请长按文字手动复制')}
    };
-   card.append(copy);
+   head.append(copy);
+  }
+  card.append(head);
+  if(item.has_text){
+   const content=document.createElement('div');content.className='private-history-text';
+   content.textContent=item.text;card.append(content);
   }
   if(item.has_file){
    const fileRow=document.createElement('div');fileRow.className='private-history-file';
