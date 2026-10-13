@@ -95,12 +95,19 @@ html[data-theme="dark"] .private-send-zone.is-dragging::after{background:rgba(22
 #private-agent-copy{margin-top:5px}
 #private-agent-list{margin-top:10px}
 
-/* Two recent private items, styled like compact clipboard cards. */
-.private-history-list{display:flex;flex-direction:column;gap:10px}
-.private-history-item{padding:12px 13px;border:1px solid var(--line);background:var(--soft);border-radius:14px}
-.private-history-head{color:var(--muted);font-size:12px;margin-bottom:8px;line-height:1.5}
-.private-history-text{font-size:13px;color:var(--ink);line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;max-height:125px;overflow:auto}
-.private-history-copy{font-size:12px;margin-top:10px}
-.private-history-file{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:8px;font-size:12px;color:var(--ink)}
+/* Keep history lightweight so the latest item remains the visual focus. */
+#private-history-section{padding:13px 16px;margin-bottom:11px}
+#private-history-section .private-section-heading{margin-bottom:9px}
+#private-history-section .private-section-heading h2{font-size:16px}
+.private-history-list{display:flex;flex-direction:column;gap:6px}
+.private-history-item{padding:8px 11px;border:1px solid var(--line);background:var(--soft);border-radius:10px}
+.private-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--muted);font-size:11px;line-height:1.4;margin-bottom:4px}
+.private-history-head small{min-width:0;flex:1;overflow-wrap:anywhere;font-size:inherit}
+.private-history-text{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;line-clamp:3;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:var(--ink);line-height:1.5}
+.private-history-copy.secondary{flex-shrink:0;gap:4px;min-height:30px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:transparent;color:var(--muted);font-size:11px;font-weight:600}
+.private-history-copy.secondary:hover:not(:disabled){background:var(--panel)}
+.private-history-copy .ui-icon{width:13px;height:13px}
+.private-history-file{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:11px;color:var(--ink)}
 .private-history-file span{flex:1;min-width:0;overflow-wrap:anywhere}
-.private-history-file a{text-decoration:none;white-space:nowrap}
+.private-history-file a{min-height:30px;padding:5px 9px;border-radius:8px;font-size:11px;text-decoration:none;white-space:nowrap}
+@media(max-width:520px){#private-history-section{padding:11px 12px}.private-history-item{padding:7px 9px}}
