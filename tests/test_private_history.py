@@ -127,5 +127,22 @@ class PrivateHistoryTests(unittest.TestCase):
         self.assertIn("api/private/history/file/",js)
 
 
+    def test_private_history_ui_regressions(self):
+        root = Path(__file__).resolve().parents[1]
+        html = self.pc.get("/").data.decode("utf-8")
+        css = (root / "static" / "private.css").read_text(encoding="utf-8")
+        js = (root / "static" / "private.js").read_text(encoding="utf-8")
+        self.assertIn(".private-history-copy.secondary{position:absolute;top:50%", css)
+        self.assertIn("transform:translateY(-50%)", css)
+        self.assertIn("@media(max-width:520px)", css)
+        self.assertIn("head.append(copy)", js)
+        self.assertIn("navigator.clipboard.writeText(item.text)", js)
+        self.assertNotIn("粘贴文字自动发送 · 选择文件后仍需点击发送", html)
+        self.assertNotIn("拖拽图片或文件到这里，也可以点击「选择文件」", html)
+        self.assertIn('id="private-text" rows="3" placeholder=', html)
+        self.assertIn("static/private.js?v=20261013-history-compact-1", html)
+        self.assertIn("static/private.css?v=20261013-history-compact-2", html)
+
+
 if __name__=="__main__":
     unittest.main()
