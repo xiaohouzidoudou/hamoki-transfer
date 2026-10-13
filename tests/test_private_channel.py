@@ -39,7 +39,11 @@ class PairedTransferTests(unittest.TestCase):
         self.assertEqual(self.phone.get('/api/private/file').data, b'hello file')
         self.assertEqual(send(self.pc,'last').status_code, 201)
         self.assertFalse(self.phone.get('/api/private/latest').json['has_file'])
-        self.assertEqual(list((Path(self.tmp.name) / 'private-files').iterdir()), [])
+        # Two most recent previous items now persist; the prior file remains
+        # downloadable from history after the new text is sent.
+        entries = self.phone.get('/api/private/history').json['items']
+        self.assertTrue(any(item['filename'] == 'sample.txt' for item in entries))
+        self.assertEqual(len(list((Path(self.tmp.name) / 'private-files').iterdir())), 1)
         devices = self.pc.get('/api/private/devices').json['devices']
         other = next(d['id'] for d in devices if not d['me'])
         self.assertEqual(self.pc.post('/api/private/revoke',json={'device_id':other},headers=self.headers).status_code,200)
