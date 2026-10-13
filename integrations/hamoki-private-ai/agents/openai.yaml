@@ -1,0 +1,3 @@
+interface:
+  display_name: "Hamoki Private AI"
+  short_description: "Send files or text to a paired Hamoki private room using an AI agent."
