@@ -12,10 +12,17 @@ import time
 import zipfile
 
 from flask import abort, jsonify, make_response, request, send_file
+from werkzeug.exceptions import HTTPException
 
 COOKIE = "hamoki_private_device"
 CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
 COOKIE_AGE = 400 * 86400
+
+
+class PrivateStorageFull(HTTPException):
+    code = 507
+    description = "服务器剩余存储空间不足"
+
 
 
 def digest(value):
@@ -362,7 +369,7 @@ def setup_private(app, db, files, lock, limit):
                     "SELECT COALESCE(SUM(size),0) FROM private_history WHERE filekey!=''"
                 ).fetchone()[0]
                 if public_bytes + private_bytes + history_bytes - removed_bytes + size > app.config["TOTAL_BYTES"]:
-                    abort(507, description="服务器剩余存储空间不足")
+                    raise PrivateStorageFull()
                 if pending:
                     os.replace(pending, storage / new_key)
                 if room["revision"]:
