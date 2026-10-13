@@ -94,3 +94,13 @@ html[data-theme="dark"] .private-send-zone.is-dragging::after{background:rgba(22
 #private-agent-secret{display:block;overflow-wrap:anywhere;user-select:all;font-size:12px;line-height:1.7;padding:5px 0;color:var(--ink)}
 #private-agent-copy{margin-top:5px}
 #private-agent-list{margin-top:10px}
+
+/* Two recent private items, styled like compact clipboard cards. */
+.private-history-list{display:flex;flex-direction:column;gap:10px}
+.private-history-item{padding:12px 13px;border:1px solid var(--line);background:var(--soft);border-radius:14px}
+.private-history-head{color:var(--muted);font-size:12px;margin-bottom:8px;line-height:1.5}
+.private-history-text{font-size:13px;color:var(--ink);line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;max-height:125px;overflow:auto}
+.private-history-copy{font-size:12px;margin-top:10px}
+.private-history-file{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:8px;font-size:12px;color:var(--ink)}
+.private-history-file span{flex:1;min-width:0;overflow-wrap:anywhere}
+.private-history-file a{text-decoration:none;white-space:nowrap}
