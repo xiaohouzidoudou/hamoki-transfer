@@ -86,3 +86,11 @@ html[data-theme="dark"] .private-send-zone.is-dragging::after{background:rgba(22
 .guest-unlock-row input{flex:1;min-width:0;font-size:13px}
 .guest-unlock-row button{flex-shrink:0}
 @media(max-width:520px){.guest-unlock-row{flex-wrap:wrap}.guest-unlock-row input{flex-basis:100%}}
+
+/* Private AI agent connections, tucked into existing Device management. */
+.private-ai-panel{margin-top:17px;padding-top:15px;border-top:1px solid var(--line)}
+.private-ai-panel h3{font-size:15px;margin:0;color:var(--ink)}
+#private-agent-created{padding:10px;margin:10px 0;border:1px solid var(--line);border-radius:12px;background:var(--soft)}
+#private-agent-secret{display:block;overflow-wrap:anywhere;user-select:all;font-size:12px;line-height:1.7;padding:5px 0;color:var(--ink)}
+#private-agent-copy{margin-top:5px}
+#private-agent-list{margin-top:10px}
